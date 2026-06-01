@@ -304,7 +304,7 @@ export function MarqueeSection({ draft, patch }: EditorProps) {
 export function StorySection({ draft, patch, patchImage }: EditorProps) {
   return (
     <div>
-      <SectionHeader title="Cerita Kami" description="Section biru dengan judul utama dan card-card value proposition." />
+      <SectionHeader title="Cerita Kami" description="Judul di tengah, gambar produk di bawah judul, lalu tiga kartu value proposition." />
       <FieldGroup title="Judul section">
         <Field label="Badge" value={draft.story.badge} onChange={(v) => patch((c) => ({ ...c, story: { ...c.story, badge: v } }))} />
         <div className="grid sm:grid-cols-2 gap-4">
@@ -316,15 +316,15 @@ export function StorySection({ draft, patch, patchImage }: EditorProps) {
         <Field label="Penutup judul" value={draft.story.titlePart3} onChange={(v) => patch((c) => ({ ...c, story: { ...c.story, titlePart3: v } }))} />
       </FieldGroup>
 
-      <FieldGroup title="Gambar samping judul (kanan)">
+      <FieldGroup title="Showcase produk (di atas kartu)">
         <ImageUploadField
-          label="Gambar section cerita"
-          hint="Menggantikan teks paragraf di sebelah kanan judul. Disarankan landscape, min. lebar 600px."
+          label="Gambar produk / 4 kotak"
+          hint="Tampil di bawah judul, di atas tiga kartu. Disarankan gambar lebar (4 kotak parfum) atau upload gambar per aroma di section Aroma."
           imageUrl={draft.story.sideImageUrl ?? ""}
-          alt="Cerita EVOMI"
+          alt="Produk EVOMI"
           uploadPrefix="story"
           onChange={(url) => patchImage((c) => ({ ...c, story: { ...c.story, sideImageUrl: url } }))}
-          previewClassName="w-full aspect-[4/3] max-h-56 rounded-xl"
+          previewClassName="w-full max-h-48 rounded-xl object-contain"
         />
       </FieldGroup>
 

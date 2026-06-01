@@ -15,6 +15,12 @@ const STORY_ICONS = {
   sparkles: Sparkles,
 } satisfies Record<StoryIcon, typeof Heart>;
 
+const STORY_TITLE_COLORS: Record<StoryIcon, string> = {
+  heart: "#1172ba",
+  leaf: "#5EA14A",
+  sparkles: "#DD74A5",
+};
+
 function Marquee({ items }: { items: { id: string; text: string; color?: string }[] }) {
   return (
     <div className="overflow-hidden bg-[#1172ba] text-white border-y-4 border-white">
@@ -147,7 +153,7 @@ export function EvomiLanding() {
       </nav>
 
       {/* HERO */}
-      <section className="relative min-h-[90vh] flex items-center overflow-visible">
+      <section className="relative min-h-[90vh] w-full overflow-visible">
         <div className="absolute inset-0 pointer-events-none hidden md:block overflow-visible" aria-hidden>
           {[...hero.decorations]
             .sort((a, b) => a.zIndex - b.zIndex)
@@ -244,24 +250,22 @@ export function EvomiLanding() {
               <Send className="w-5 h-5 group-hover:rotate-12 transition" />
             </a>
           </div>
-        </div>
 
-        {(() => {
-          const highlightItems = hero.highlights.filter((h) => h.imageUrl);
-          if (highlightItems.length === 0) return null;
+          {(() => {
+            const highlightItems = hero.highlights.filter((h) => h.imageUrl);
+            if (highlightItems.length === 0) return null;
 
-          const isSingle = highlightItems.length === 1;
-          const gridClass =
-            highlightItems.length === 2
-              ? "grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4"
-              : highlightItems.length === 3
-                ? "grid grid-cols-1 md:grid-cols-[1fr_2fr_1fr] gap-3 md:gap-4 items-center"
-                : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-center";
+            const isSingle = highlightItems.length === 1;
+            const gridClass =
+              highlightItems.length === 2
+                ? "grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4"
+                : highlightItems.length === 3
+                  ? "grid grid-cols-1 md:grid-cols-[1fr_2fr_1fr] gap-3 md:gap-4 items-center"
+                  : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-center";
 
-          return (
-            <div className="relative z-10 mt-12 w-full px-4 sm:px-6 lg:px-10">
+            return (
               <div
-                className={`mx-auto w-full ${isSingle ? "max-w-[min(100%,1280px)]" : "max-w-7xl"} ${isSingle ? "" : gridClass}`}
+                className={`mt-12 w-full ${isSingle ? "max-w-[min(100vw-2rem,1280px)]" : "max-w-6xl"} ${isSingle ? "" : gridClass}`}
               >
                 {highlightItems.map((h) => (
                   <img
@@ -269,62 +273,105 @@ export function EvomiLanding() {
                     src={h.imageUrl}
                     alt={h.alt || "Kampanye EVOMI"}
                     className="block w-full h-auto max-w-full object-contain object-center rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
-                    style={{ maxHeight: "none" }}
                   />
                 ))}
               </div>
-            </div>
-          );
-        })()}
+            );
+          })()}
+        </div>
       </section>
 
       {/* MARQUEE */}
       <Marquee items={content.marquee} />
 
       {/* STORY */}
-      <section id="story" className="relative overflow-visible py-24 pb-28 px-6" style={{ backgroundColor: "#1172ba" }}>
-        <div className="max-w-7xl mx-auto text-white overflow-visible">
-          <div className="grid md:grid-cols-12 gap-8 lg:gap-12 items-center mb-16">
-            <div className="md:col-span-7">
-              <div className="inline-block px-3 py-1 rounded-full bg-[#FFD521] text-black tracking-tight mb-4">
-                {story.badge}
-              </div>
-              <h2 className="leading-[1.05] tracking-tight" style={{ fontSize: "clamp(40px, 6vw, 72px)", fontWeight: 600 }}>
-                {story.titlePart1}
-                <span className="italic" style={{ color: "#F899C6" }}>{story.titleHighlight1}</span>
-                {story.titlePart2}
-                <span className="italic" style={{ color: "#A5E194" }}>{story.titleHighlight2}</span>
-                {story.titlePart3}
-              </h2>
+      <section id="story" className="relative overflow-visible pt-10 pb-24 px-6" style={{ backgroundColor: "#1172ba" }}>
+        <div className="max-w-6xl mx-auto text-white overflow-visible">
+          <div className="text-center mb-10 md:mb-14">
+            <div className="inline-block px-4 py-1.5 rounded-full bg-[#FFD521] text-black tracking-tight mb-6">
+              {story.badge}
             </div>
-            {story.sideImageUrl && (
-              <div className="md:col-span-5 w-full overflow-visible flex items-center justify-center">
-                <img
-                  src={story.sideImageUrl}
-                  alt="Cerita EVOMI"
-                  className="w-full h-auto max-w-full object-contain object-center block"
-                />
-              </div>
-            )}
+            <h2
+              className="leading-[1.08] tracking-tight text-center max-w-4xl mx-auto"
+              style={{ fontSize: "clamp(32px, 5vw, 56px)", fontWeight: 600 }}
+            >
+              {story.titlePart1}
+              <span className="italic" style={{ color: "#F899C6" }}>
+                {story.titleHighlight1}
+              </span>
+              {story.titlePart2}
+              <span className="italic" style={{ color: "#A5E194" }}>
+                {story.titleHighlight2}
+              </span>
+              {story.titlePart3}
+            </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {story.cards.map((c) => {
+          {(() => {
+            const scentProducts = scents.cards.filter((s) => s.imageUrl);
+            const showScentRow = scentProducts.length > 0;
+
+            if (showScentRow) {
+              return (
+                <div className="flex flex-wrap justify-center items-end gap-3 sm:gap-5 md:gap-8 mb-12 md:mb-16 px-2">
+                  {scentProducts.map((s, i) => (
+                    <motion.img
+                      key={s.id}
+                      src={s.imageUrl}
+                      alt={s.name}
+                      initial={{ opacity: 0, y: 24 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.06 }}
+                      className="w-[clamp(72px,18vw,200px)] h-auto object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.25)]"
+                    />
+                  ))}
+                </div>
+              );
+            }
+
+            if (story.sideImageUrl) {
+              return (
+                <div className="flex justify-center mb-12 md:mb-16 px-2">
+                  <img
+                    src={story.sideImageUrl}
+                    alt="Produk EVOMI"
+                    className="w-full max-w-5xl h-auto object-contain object-center"
+                  />
+                </div>
+              );
+            }
+
+            return null;
+          })()}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
+            {story.cards.map((c, i) => {
               const Icon = STORY_ICONS[c.icon] ?? Heart;
+              const titleColor = STORY_TITLE_COLORS[c.icon] ?? "#1172ba";
               return (
                 <motion.div
                   key={c.id}
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  whileHover={{ y: -6, rotate: -1 }}
-                  className="bg-white text-[#1172ba] rounded-3xl p-7 border-4 border-black shadow-[8px_8px_0_0_#000]"
+                  transition={{ delay: i * 0.08 }}
+                  whileHover={{ y: -4 }}
+                  className="bg-white rounded-2xl p-6 md:p-7 border-[3px] border-black shadow-[5px_5px_0_0_#000]"
                 >
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center border-2 border-black mb-4" style={{ backgroundColor: c.bg }}>
-                    <span className="text-black"><Icon className="w-7 h-7" /></span>
+                  <div
+                    className="w-14 h-14 rounded-full flex items-center justify-center mb-5"
+                    style={{ backgroundColor: c.bg }}
+                  >
+                    <Icon className="w-7 h-7" style={{ color: titleColor }} strokeWidth={2.25} />
                   </div>
-                  <h3 className="tracking-tight mb-2" style={{ fontSize: 26, fontWeight: 600 }}>{c.title}</h3>
-                  <p className="text-black/70 leading-relaxed">{c.body}</p>
+                  <h3
+                    className="tracking-tight mb-2"
+                    style={{ fontSize: 24, fontWeight: 600, color: titleColor }}
+                  >
+                    {c.title}
+                  </h3>
+                  <p className="text-black/70 leading-relaxed text-[15px]">{c.body}</p>
                 </motion.div>
               );
             })}
