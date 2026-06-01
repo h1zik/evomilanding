@@ -38,6 +38,11 @@ export async function fetchSubmissions(): Promise<WaitlistSubmission[]> {
   return loadFromStorage();
 }
 
+export async function fetchWaitlistCount(): Promise<number> {
+  const list = await fetchSubmissions();
+  return list.length;
+}
+
 export async function addSubmission(data: NewWaitlistSubmission): Promise<WaitlistSubmission> {
   const entry: WaitlistSubmission = {
     id: createId(),

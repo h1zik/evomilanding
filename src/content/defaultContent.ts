@@ -8,7 +8,7 @@ export const defaultContent: LandingContent = {
   hero: {
     counterLabel: "LIVE COUNTER",
     counterSuffix: "orang sudah masuk waitlist ✨",
-    counterStart: 2847,
+    counterStart: 0,
     titleLine1: "Temukan karakter",
     titleHighlight: "aromamu",
     titleLine2: "di Evomi",

@@ -35,11 +35,13 @@ export function HeroSection({ draft, patch }: { draft: LandingContent; patch: Pa
           />
         </FieldGroup>
         <FieldGroup title="Live counter">
+          <p className="text-sm text-black/55 mb-3">
+            Angka di landing diambil dari jumlah pendaftar waitlist di database (diperbarui otomatis).
+          </p>
           <div className="grid sm:grid-cols-2 gap-4">
             <Field label="Label badge" value={draft.hero.counterLabel} onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, counterLabel: v } }))} />
-            <NumberField label="Angka awal counter" value={draft.hero.counterStart} onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, counterStart: v } }))} hint="Counter akan naik otomatis + saat ada pendaftar" />
+            <Field label="Teks di bawah angka" value={draft.hero.counterSuffix} onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, counterSuffix: v } }))} />
           </div>
-          <Field label="Teks di bawah angka" value={draft.hero.counterSuffix} onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, counterSuffix: v } }))} />
         </FieldGroup>
         <FieldGroup title="Judul & deskripsi">
           <div className="grid sm:grid-cols-2 gap-4">

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { useContent } from "@/content/ContentContext";
 import { fillTemplate, renderInline } from "@/content/renderInline";
-import { addSubmission } from "@/content/waitlistStorage";
+import { addSubmission, fetchWaitlistCount } from "@/content/waitlistStorage";
 import { BrandMark } from "./BrandMark";
 import type { StoryIcon } from "@/content/types";
 
@@ -58,15 +58,11 @@ function Squiggle({ className, color = "#fff" }: { className?: string; color?: s
 
 export function EvomiLanding() {
   const { content, loading } = useContent();
-  const [count, setCount] = useState(content.hero.counterStart);
+  const [count, setCount] = useState(0);
   const [whatsapp, setWhatsapp] = useState("");
   const [name, setName] = useState("");
   const [scent, setScent] = useState(content.scents.cards[0]?.name ?? "");
   const [submitted, setSubmitted] = useState(false);
-
-  useEffect(() => {
-    setCount(content.hero.counterStart);
-  }, [content.hero.counterStart]);
 
   useEffect(() => {
     if (content.scents.cards[0]) {
@@ -75,10 +71,19 @@ export function EvomiLanding() {
   }, [content.scents.cards]);
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setCount((c) => c + Math.floor(Math.random() * 3) + 1);
-    }, 4000);
-    return () => clearInterval(id);
+    let cancelled = false;
+
+    async function loadCount() {
+      const total = await fetchWaitlistCount();
+      if (!cancelled) setCount(total);
+    }
+
+    void loadCount();
+    const id = setInterval(() => void loadCount(), 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -92,13 +97,14 @@ export function EvomiLanding() {
       toast.error(content.waitlist.errors.name);
       return;
     }
-    setSubmitted(true);
-    setCount((c) => c + 1);
     await addSubmission({
       name: name.trim(),
       whatsapp: digits,
       scent,
     });
+    const total = await fetchWaitlistCount();
+    setCount(total);
+    setSubmitted(true);
     confetti({
       particleCount: 120,
       spread: 80,
