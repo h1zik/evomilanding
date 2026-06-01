@@ -10,6 +10,7 @@ export interface StoryCard {
   id: string;
   icon: StoryIcon;
   title: string;
+  titleColor: string;
   body: string;
   bg: string;
 }
@@ -18,10 +19,20 @@ export interface ScentCard {
   id: string;
   name: string;
   sub: string;
+  /** Latar area gambar/emoji (atas) */
   color: string;
+  /** Latar area teks (bawah) */
   soft: string;
+  nameColor: string;
+  subColor: string;
+  vibeColor: string;
+  descColor: string;
   emoji: string;
   imageUrl: string;
+  /** Gambar pojok kanan bawah (ganti bintang berputar) */
+  stickerImageUrl: string;
+  /** Warna bintang jika sticker kosong */
+  stickerColor: string;
   vibe: string;
   desc: string;
 }
@@ -43,8 +54,18 @@ export interface SocialLink {
 export interface HeroMascot {
   id: string;
   name: string;
+  nameColor: string;
   sub: string;
+  subColor: string;
   imageUrl: string;
+}
+
+/** Layout dekor hero khusus tampilan mobile (< md) */
+export interface HeroDecorationMobile {
+  x: number;
+  y: number;
+  width: number;
+  rotation?: number;
 }
 
 /** Gambar dekoratif hero — posisi dalam persen area hero */
@@ -56,6 +77,8 @@ export interface HeroDecoration {
   width: number;
   rotation: number;
   zIndex: number;
+  /** Override posisi/ukuran di mobile; kosong = skala otomatis dari desktop */
+  mobile?: HeroDecorationMobile;
 }
 
 /** Strip gambar di bawah CTA hero (mis. recycle / kampanye) */
@@ -74,9 +97,12 @@ export interface LandingContent {
     counterLabel: string;
     counterSuffix: string;
     counterStart: number;
-    titleLine1: string;
-    titleHighlight: string;
-    titleLine2: string;
+    /** Judul utama — mendukung <br>, [#hex]teks[/], **bold** */
+    title: string;
+    /** @deprecated Dipakai hanya jika `title` kosong (migrasi data lama) */
+    titleLine1?: string;
+    titleHighlight?: string;
+    titleLine2?: string;
     description: string;
     ctaText: string;
     mascots: HeroMascot[];
@@ -88,8 +114,10 @@ export interface LandingContent {
     badge: string;
     titlePart1: string;
     titleHighlight1: string;
+    titleHighlight1Color: string;
     titlePart2: string;
     titleHighlight2: string;
+    titleHighlight2Color: string;
     titlePart3: string;
     sideImageUrl: string;
     cards: StoryCard[];

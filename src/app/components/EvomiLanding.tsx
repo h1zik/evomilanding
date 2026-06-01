@@ -4,10 +4,20 @@ import { Sparkles, Heart, Flame, Leaf, Send, CheckCircle2, Star } from "lucide-r
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { useContent } from "@/content/ContentContext";
-import { fillTemplate, renderInline } from "@/content/renderInline";
+import { fillTemplate, renderInline, renderRichText, stripRichText } from "@/content/renderInline";
 import { addSubmission, fetchWaitlistCount } from "@/content/waitlistStorage";
 import { BrandMark } from "./BrandMark";
-import type { StoryIcon } from "@/content/types";
+import type { HeroDecoration, HeroMascot, StoryIcon } from "@/content/types";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from "./ui/carousel";
+import { cn } from "./ui/utils";
+import { getDecorationLayout, type DecorationViewport } from "@/content/heroDecorationLayout";
 
 const STORY_ICONS = {
   heart: Heart,
@@ -15,11 +25,6 @@ const STORY_ICONS = {
   sparkles: Sparkles,
 } satisfies Record<StoryIcon, typeof Heart>;
 
-const STORY_TITLE_COLORS: Record<StoryIcon, string> = {
-  heart: "#1172ba",
-  leaf: "#5EA14A",
-  sparkles: "#DD74A5",
-};
 
 function Marquee({ items }: { items: { id: string; text: string; color?: string }[] }) {
   return (
@@ -43,6 +48,147 @@ function Marquee({ items }: { items: { id: string; text: string; color?: string 
   );
 }
 
+function HeroMascotCard({ mascot, hover = false }: { mascot: HeroMascot; hover?: boolean }) {
+  const body = (
+    <>
+      {mascot.imageUrl ? (
+        <img
+          src={mascot.imageUrl}
+          alt={`${mascot.name} ${mascot.sub}`}
+          className="w-24 h-24 sm:w-28 sm:h-28 md:w-24 md:h-24 object-contain drop-shadow-md"
+        />
+      ) : (
+        <div
+          className="w-24 h-24 sm:w-28 sm:h-28 md:w-24 md:h-24 rounded-2xl border-2 border-dashed border-black/20 flex items-center justify-center text-3xl bg-white/50"
+          title="Upload maskot di admin"
+        >
+          ✨
+        </div>
+      )}
+      <p className="tracking-tight text-center leading-tight font-semibold mt-2">
+        <span style={{ color: mascot.nameColor }}>{mascot.name}</span>
+        <br />
+        <span style={{ color: mascot.subColor }}>{mascot.sub}</span>
+      </p>
+    </>
+  );
+
+  if (hover) {
+    return (
+      <motion.div
+        className="flex flex-col items-center gap-2 max-w-[120px]"
+        whileHover={{ scale: 1.1 }}
+        transition={{ type: "spring", stiffness: 380, damping: 22 }}
+      >
+        {body}
+      </motion.div>
+    );
+  }
+
+  return <div className="flex flex-col items-center max-w-[160px] mx-auto">{body}</div>;
+}
+
+function HeroMascotsMobileCarousel({ mascots }: { mascots: HeroMascot[] }) {
+  const [api, setApi] = useState<CarouselApi>();
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    if (!api) return;
+    const onSelect = () => setActive(api.selectedScrollSnap());
+    onSelect();
+    api.on("select", onSelect);
+    return () => {
+      api.off("select", onSelect);
+    };
+  }, [api]);
+
+  if (mascots.length === 0) return null;
+
+  if (mascots.length === 1) {
+    return (
+      <div className="md:hidden flex justify-center mt-10">
+        <HeroMascotCard mascot={mascots[0]} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="md:hidden w-full max-w-xs mx-auto mt-10 px-2">
+      <Carousel
+        opts={{ loop: true, align: "center" }}
+        setApi={setApi}
+        className="w-full"
+      >
+        <CarouselContent className="ml-0">
+          {mascots.map((m) => (
+            <CarouselItem key={m.id} className="pl-0 basis-full">
+              <HeroMascotCard mascot={m} />
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious
+          variant="outline"
+          className="left-0 top-[38%] size-9 rounded-full border-2 border-black bg-white shadow-[2px_2px_0_0_#000] hover:bg-[#1172ba] hover:text-white hover:border-black disabled:opacity-40"
+        />
+        <CarouselNext
+          variant="outline"
+          className="right-0 top-[38%] size-9 rounded-full border-2 border-black bg-white shadow-[2px_2px_0_0_#000] hover:bg-[#1172ba] hover:text-white hover:border-black disabled:opacity-40"
+        />
+      </Carousel>
+      <div className="flex justify-center gap-2 mt-4" role="tablist" aria-label="Pilih maskot">
+        {mascots.map((m, i) => (
+          <button
+            key={m.id}
+            type="button"
+            role="tab"
+            aria-selected={i === active}
+            aria-label={m.name}
+            onClick={() => api?.scrollTo(i)}
+            className={cn(
+              "h-2 rounded-full transition-all",
+              i === active ? "w-6 bg-[#1172ba]" : "w-2 bg-black/20",
+            )}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function HeroDecorationLayer({
+  decorations,
+  viewport,
+}: {
+  decorations: HeroDecoration[];
+  viewport: DecorationViewport;
+}) {
+  return (
+    <>
+      {[...decorations]
+        .sort((a, b) => a.zIndex - b.zIndex)
+        .filter((d) => d.imageUrl)
+        .map((d) => {
+          const layout = getDecorationLayout(d, viewport);
+          return (
+            <img
+              key={`${d.id}-${viewport}`}
+              src={d.imageUrl}
+              alt=""
+              className="absolute h-auto max-w-none select-none"
+              style={{
+                left: `${layout.x}%`,
+                top: `${layout.y}%`,
+                width: layout.width,
+                zIndex: d.zIndex,
+                transform: `translate(-50%, -50%) rotate(${layout.rotation}deg)`,
+              }}
+            />
+          );
+        })}
+    </>
+  );
+}
+
 function StarBurst({ className, color = "#FFD521" }: { className?: string; color?: string }) {
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden>
@@ -50,14 +196,6 @@ function StarBurst({ className, color = "#FFD521" }: { className?: string; color
         d="M50 0 L60 38 L100 50 L60 62 L50 100 L40 62 L0 50 L40 38 Z"
         fill={color}
       />
-    </svg>
-  );
-}
-
-function Squiggle({ className, color = "#fff" }: { className?: string; color?: string }) {
-  return (
-    <svg viewBox="0 0 200 20" className={className} aria-hidden fill="none">
-      <path d="M0 10 Q 25 0, 50 10 T 100 10 T 150 10 T 200 10" stroke={color} strokeWidth="4" strokeLinecap="round" />
     </svg>
   );
 }
@@ -133,20 +271,17 @@ export function EvomiLanding() {
   return (
     <div className="min-h-screen w-full overflow-x-clip bg-white text-black font-sans">
       {/* NAV */}
-      <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/80">
+      <nav className="relative bg-white">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-center">
           {nav.brandLogoUrl ? (
             <img
               src={nav.brandLogoUrl}
-              alt={nav.brandName}
+              alt={stripRichText(nav.brandName)}
               className="h-12 w-auto max-w-[200px] object-contain mx-auto"
             />
           ) : (
-            <span
-              className="text-center"
-              style={{ fontSize: 24, fontWeight: 600, color: "#1172ba" }}
-            >
-              {nav.brandName}
+            <span className="text-center text-[24px] font-semibold text-[#1172ba] leading-snug max-md:px-2">
+              {renderRichText(nav.brandName)}
             </span>
           )}
         </div>
@@ -154,25 +289,19 @@ export function EvomiLanding() {
 
       {/* HERO */}
       <section className="relative min-h-[90vh] w-full overflow-visible">
-        <div className="absolute inset-0 pointer-events-none hidden md:block overflow-visible" aria-hidden>
-          {[...hero.decorations]
-            .sort((a, b) => a.zIndex - b.zIndex)
-            .filter((d) => d.imageUrl)
-            .map((d) => (
-              <img
-                key={d.id}
-                src={d.imageUrl}
-                alt=""
-                className="absolute h-auto max-w-none select-none"
-                style={{
-                  left: `${d.x}%`,
-                  top: `${d.y}%`,
-                  width: d.width,
-                  zIndex: d.zIndex,
-                  transform: `translate(-50%, -50%) rotate(${d.rotation}deg)`,
-                }}
-              />
-            ))}
+        {/* Desktop: dekor di belakang teks */}
+        <div
+          className="absolute inset-0 pointer-events-none overflow-visible hidden md:block z-0"
+          aria-hidden
+        >
+          <HeroDecorationLayer decorations={hero.decorations} viewport="desktop" />
+        </div>
+        {/* Mobile: dekor di atas kartu counter (opaque) supaya tidak ketutup putih */}
+        <div
+          className="absolute inset-0 pointer-events-none overflow-visible md:hidden z-20"
+          aria-hidden
+        >
+          <HeroDecorationLayer decorations={hero.decorations} viewport="mobile" />
         </div>
 
         <div className="relative z-10 max-w-5xl mx-auto px-6 py-20 flex flex-col items-center text-center w-full">
@@ -203,44 +332,22 @@ export function EvomiLanding() {
             </div>
           </motion.div>
 
-          <h1 className="leading-[0.95] tracking-tight text-center" style={{ fontSize: "clamp(48px, 8vw, 112px)", fontWeight: 600 }}>
-            <span className="block">{hero.titleLine1}</span>
-            <span className="block">
-              <span className="relative inline-block">
-                <span style={{ color: "#1172ba" }}>{hero.titleHighlight}</span>
-                <Squiggle className="absolute -bottom-3 left-0 w-full h-3" color="#FFD521" />
-              </span>
-              {" "}{hero.titleLine2}
-            </span>
+          <h1
+            className="leading-[1.3] md:leading-[0.95] tracking-tight text-center max-md:px-1 [&_br]:block"
+            style={{ fontSize: "clamp(48px, 8vw, 112px)", fontWeight: 600 }}
+          >
+            {renderRichText(hero.title, { squiggleFirstColor: true, squiggleColor: "#FFD521" })}
           </h1>
 
           <p className="mt-8 max-w-2xl text-lg md:text-xl leading-relaxed text-black/80 text-center mx-auto">
-            {renderInline(hero.description)}
+            {renderRichText(hero.description)}
           </p>
 
-          <div className="mt-10 flex flex-wrap gap-6 sm:gap-8 justify-center items-end">
+          <HeroMascotsMobileCarousel mascots={hero.mascots} />
+
+          <div className="mt-10 hidden md:flex flex-wrap gap-6 sm:gap-8 justify-center items-end">
             {hero.mascots.map((m) => (
-              <div key={m.id} className="flex flex-col items-center gap-2 max-w-[120px]">
-                {m.imageUrl ? (
-                  <img
-                    src={m.imageUrl}
-                    alt={`${m.name} ${m.sub}`}
-                    className="w-20 h-20 sm:w-24 sm:h-24 object-contain drop-shadow-md"
-                  />
-                ) : (
-                  <div
-                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 border-dashed border-black/20 flex items-center justify-center text-3xl bg-white/50"
-                    title="Upload maskot di admin"
-                  >
-                    ✨
-                  </div>
-                )}
-                <p className="tracking-tight text-center leading-tight" style={{ fontWeight: 600 }}>
-                  {m.name}
-                  <br />
-                  <span className="italic font-normal text-black/80">{m.sub}</span>
-                </p>
-              </div>
+              <HeroMascotCard key={m.id} mascot={m} hover />
             ))}
           </div>
 
@@ -286,34 +393,39 @@ export function EvomiLanding() {
 
       {/* STORY */}
       <section id="story" className="relative overflow-visible pt-10 pb-24 px-6" style={{ backgroundColor: "#1172ba" }}>
-        <div className="max-w-6xl mx-auto text-white overflow-visible">
-          <div className="text-center mb-10 md:mb-14">
-            <div className="inline-block px-4 py-1.5 rounded-full bg-[#FFD521] text-black tracking-tight mb-6">
-              {story.badge}
-            </div>
+        <div className="max-w-6xl mx-auto text-white overflow-visible flex flex-col items-center gap-0">
             <h2
-              className="leading-[1.08] tracking-tight text-center max-w-4xl mx-auto"
+              className="leading-[0.95] tracking-tight text-center max-w-4xl mx-auto m-0"
               style={{ fontSize: "clamp(32px, 5vw, 56px)", fontWeight: 600 }}
             >
               {story.titlePart1}
-              <span className="italic" style={{ color: "#F899C6" }}>
+              <span style={{ color: story.titleHighlight1Color }}>
                 {story.titleHighlight1}
               </span>
               {story.titlePart2}
-              <span className="italic" style={{ color: "#A5E194" }}>
+              <span style={{ color: story.titleHighlight2Color }}>
                 {story.titleHighlight2}
               </span>
               {story.titlePart3}
             </h2>
-          </div>
 
           {(() => {
-            const scentProducts = scents.cards.filter((s) => s.imageUrl);
-            const showScentRow = scentProducts.length > 0;
-
-            if (showScentRow) {
+            if (story.sideImageUrl) {
               return (
-                <div className="flex flex-wrap justify-center items-end gap-3 sm:gap-5 md:gap-8 mb-12 md:mb-16 px-2">
+                <div className="flex justify-center w-full px-2 -mt-6 md:-mt-10 lg:-mt-12 leading-[0]">
+                  <img
+                    src={story.sideImageUrl}
+                    alt="Produk EVOMI"
+                    className="w-full max-w-5xl h-auto object-contain object-top block m-0 p-0 align-top"
+                  />
+                </div>
+              );
+            }
+
+            const scentProducts = scents.cards.filter((s) => s.imageUrl);
+            if (scentProducts.length > 0) {
+              return (
+                <div className="flex flex-wrap justify-center items-end gap-3 sm:gap-5 md:gap-8 w-full px-2 -mt-6 md:-mt-10 lg:-mt-12">
                   {scentProducts.map((s, i) => (
                     <motion.img
                       key={s.id}
@@ -330,25 +442,13 @@ export function EvomiLanding() {
               );
             }
 
-            if (story.sideImageUrl) {
-              return (
-                <div className="flex justify-center mb-12 md:mb-16 px-2">
-                  <img
-                    src={story.sideImageUrl}
-                    alt="Produk EVOMI"
-                    className="w-full max-w-5xl h-auto object-contain object-center"
-                  />
-                </div>
-              );
-            }
-
             return null;
           })()}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 w-full -mt-6 md:-mt-10 lg:-mt-12">
             {story.cards.map((c, i) => {
               const Icon = STORY_ICONS[c.icon] ?? Heart;
-              const titleColor = STORY_TITLE_COLORS[c.icon] ?? "#1172ba";
+              const titleColor = c.titleColor || "#1172ba";
               return (
                 <motion.div
                   key={c.id}
@@ -382,13 +482,16 @@ export function EvomiLanding() {
       {/* SCENTS */}
       <section id="scents" className="relative py-24 px-6 bg-white">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-wrap items-end justify-between gap-6 mb-12">
-            <h2 className="leading-[1] tracking-tight" style={{ fontSize: "clamp(40px, 6vw, 80px)", fontWeight: 600 }}>
+          <div className="text-center mb-12 flex flex-col items-center w-full px-2">
+            <h2
+              className="leading-[1] tracking-tight whitespace-nowrap"
+              style={{ fontSize: "clamp(24px, 5.5vw, 80px)", fontWeight: 600 }}
+            >
               {scents.titleBefore}
               <span style={{ color: "#1172ba" }}>{scents.titleHighlight}</span>
               {scents.titleAfter}
             </h2>
-            <p className="max-w-md text-black/70 text-lg">{scents.description}</p>
+            <p className="mt-4 max-w-3xl text-black/70 text-lg leading-relaxed">{scents.description}</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -419,21 +522,39 @@ export function EvomiLanding() {
                     No. 0{i + 1}
                   </div>
                   <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
-                    className="absolute bottom-4 right-4 w-16 h-16"
+                    animate={{ rotate: [-12, 12, -12] }}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute bottom-4 right-4 w-16 h-16 origin-center"
                   >
-                    <StarBurst className="w-full h-full" color="#FFD521" />
+                    {s.stickerImageUrl ? (
+                      <img
+                        src={s.stickerImageUrl}
+                        alt=""
+                        className="w-full h-full object-contain pointer-events-none"
+                        draggable={false}
+                      />
+                    ) : (
+                      <StarBurst className="w-full h-full" color={s.stickerColor} />
+                    )}
                   </motion.div>
                 </div>
-                <div className="relative z-10 -mt-5 w-full flex-1 overflow-hidden rounded-t-3xl bg-white p-5 pt-6">
-                  <h3 style={{ fontSize: 28, fontWeight: 600 }} className="tracking-tight leading-none">
-                    {s.name}
+                <div className="relative z-10 -mt-5 w-full flex-1 overflow-hidden rounded-t-3xl bg-white p-5 pt-6 flex flex-col gap-5">
+                  <h3
+                    style={{ fontSize: 28, fontWeight: 600 }}
+                    className="tracking-tight leading-none"
+                  >
+                    <span style={{ color: s.nameColor }}>{s.name}</span>
                     <br />
-                    <span className="italic">{s.sub}</span>
+                    <span className="italic" style={{ color: s.subColor }}>
+                      {s.sub}
+                    </span>
                   </h3>
-                  <p className="text-sm mt-2 text-black/70">{s.vibe}</p>
-                  <p className="text-sm mt-3 text-black/80 leading-relaxed">{s.desc}</p>
+                  <p className="text-sm" style={{ color: s.vibeColor }}>
+                    {s.vibe}
+                  </p>
+                  <p className="text-sm leading-relaxed" style={{ color: s.descColor }}>
+                    {s.desc}
+                  </p>
                 </div>
               </motion.div>
             ))}

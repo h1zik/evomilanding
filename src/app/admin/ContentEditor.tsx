@@ -1,9 +1,11 @@
 import type { LandingContent, ScentCard, StoryIcon, TestimonialCard } from "@/content/types";
+import { RichTextEditor } from "./components/RichTextEditor";
 import { createId } from "@/content/storage";
 import { Button } from "../components/ui/button";
 import { Plus } from "lucide-react";
 import {
   CardShell,
+  ColorField,
   Field,
   FieldGroup,
   NumberField,
@@ -35,10 +37,12 @@ export function HeroSection({ draft, patch, patchImage }: EditorProps) {
             brandName={draft.nav.brandName}
             onChange={(url) => patchImage((c) => ({ ...c, nav: { ...c.nav, brandLogoUrl: url } }))}
           />
-          <Field
-            label="Nama brand (teks di samping logo)"
+          <RichTextEditor
+            label="Nama brand (jika tanpa logo gambar)"
             value={draft.nav.brandName}
             onChange={(v) => patch((c) => ({ ...c, nav: { ...c.nav, brandName: v } }))}
+            singleLine
+            allowBold={false}
           />
         </FieldGroup>
         <FieldGroup title="Live counter">
@@ -51,12 +55,19 @@ export function HeroSection({ draft, patch, patchImage }: EditorProps) {
           </div>
         </FieldGroup>
         <FieldGroup title="Judul & deskripsi">
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Baris judul 1" value={draft.hero.titleLine1} onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, titleLine1: v } }))} />
-            <Field label="Kata highlight (warna biru)" value={draft.hero.titleHighlight} onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, titleHighlight: v } }))} />
-          </div>
-          <Field label="Baris judul 2" value={draft.hero.titleLine2} onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, titleLine2: v } }))} />
-          <Field label="Deskripsi" value={draft.hero.description} onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, description: v } }))} multiline hint="Gunakan **teks** untuk bold" />
+          <RichTextEditor
+            label="Judul utama"
+            value={draft.hero.title ?? ""}
+            onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, title: v } }))}
+            note="Kata berwarna pertama di judul mendapat garis kuning di landing page. Gunakan «Tambah baris baru» untuk baris berikutnya."
+            previewOptions={{ squiggleFirstColor: true, squiggleColor: "#FFD521" }}
+          />
+          <RichTextEditor
+            label="Deskripsi"
+            value={draft.hero.description}
+            onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, description: v } }))}
+            allowBold
+          />
           <Field label="Teks tombol CTA" value={draft.hero.ctaText} onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, ctaText: v } }))} />
         </FieldGroup>
 
@@ -78,7 +89,9 @@ export function HeroSection({ draft, patch, patchImage }: EditorProps) {
                       {
                         id: createId("mascot"),
                         name: "Nama",
+                        nameColor: "#000000",
                         sub: "Subtitle",
+                        subColor: "#000000",
                         imageUrl: "",
                       },
                     ],
@@ -140,7 +153,23 @@ export function HeroSection({ draft, patch, patchImage }: EditorProps) {
                     }
                   />
                   <Field
-                    label="Subtitle (italic)"
+                    label="Warna nama (hex)"
+                    value={m.nameColor ?? ""}
+                    onChange={(v) =>
+                      patch((c) => ({
+                        ...c,
+                        hero: {
+                          ...c.hero,
+                          mascots: c.hero.mascots.map((x) =>
+                            x.id === m.id ? { ...x, nameColor: v } : x,
+                          ),
+                        },
+                      }))
+                    }
+                    hint="Contoh: #000000"
+                  />
+                  <Field
+                    label="Subtitle"
                     value={m.sub}
                     onChange={(v) =>
                       patch((c) => ({
@@ -153,6 +182,22 @@ export function HeroSection({ draft, patch, patchImage }: EditorProps) {
                         },
                       }))
                     }
+                  />
+                  <Field
+                    label="Warna subtitle (hex)"
+                    value={m.subColor ?? ""}
+                    onChange={(v) =>
+                      patch((c) => ({
+                        ...c,
+                        hero: {
+                          ...c.hero,
+                          mascots: c.hero.mascots.map((x) =>
+                            x.id === m.id ? { ...x, subColor: v } : x,
+                          ),
+                        },
+                      }))
+                    }
+                    hint="Contoh: #1172ba"
                   />
                 </div>
               </CardShell>
@@ -306,12 +351,13 @@ export function StorySection({ draft, patch, patchImage }: EditorProps) {
     <div>
       <SectionHeader title="Cerita Kami" description="Judul di tengah, gambar produk di bawah judul, lalu tiga kartu value proposition." />
       <FieldGroup title="Judul section">
-        <Field label="Badge" value={draft.story.badge} onChange={(v) => patch((c) => ({ ...c, story: { ...c.story, badge: v } }))} />
         <div className="grid sm:grid-cols-2 gap-4">
           <Field label="Teks sebelum highlight 1" value={draft.story.titlePart1} onChange={(v) => patch((c) => ({ ...c, story: { ...c.story, titlePart1: v } }))} />
-          <Field label="Highlight 1 (pink)" value={draft.story.titleHighlight1} onChange={(v) => patch((c) => ({ ...c, story: { ...c.story, titleHighlight1: v } }))} />
+          <Field label="Highlight 1" value={draft.story.titleHighlight1} onChange={(v) => patch((c) => ({ ...c, story: { ...c.story, titleHighlight1: v } }))} />
+          <Field label="Warna highlight 1 (hex)" value={draft.story.titleHighlight1Color} onChange={(v) => patch((c) => ({ ...c, story: { ...c.story, titleHighlight1Color: v } }))} hint="Contoh: #F899C6" />
           <Field label="Teks tengah" value={draft.story.titlePart2} onChange={(v) => patch((c) => ({ ...c, story: { ...c.story, titlePart2: v } }))} />
-          <Field label="Highlight 2 (hijau)" value={draft.story.titleHighlight2} onChange={(v) => patch((c) => ({ ...c, story: { ...c.story, titleHighlight2: v } }))} />
+          <Field label="Highlight 2" value={draft.story.titleHighlight2} onChange={(v) => patch((c) => ({ ...c, story: { ...c.story, titleHighlight2: v } }))} />
+          <Field label="Warna highlight 2 (hex)" value={draft.story.titleHighlight2Color} onChange={(v) => patch((c) => ({ ...c, story: { ...c.story, titleHighlight2Color: v } }))} hint="Contoh: #A5E194" />
         </div>
         <Field label="Penutup judul" value={draft.story.titlePart3} onChange={(v) => patch((c) => ({ ...c, story: { ...c.story, titlePart3: v } }))} />
       </FieldGroup>
@@ -319,7 +365,7 @@ export function StorySection({ draft, patch, patchImage }: EditorProps) {
       <FieldGroup title="Showcase produk (di atas kartu)">
         <ImageUploadField
           label="Gambar produk / 4 kotak"
-          hint="Tampil di bawah judul, di atas tiga kartu. Disarankan gambar lebar (4 kotak parfum) atau upload gambar per aroma di section Aroma."
+          hint="Gambar khusus section Cerita Kami (tidak mengambil dari Aroma). Tampil di bawah judul, di atas tiga kartu. Kosongkan untuk fallback ke gambar kartu Aroma jika ada."
           imageUrl={draft.story.sideImageUrl ?? ""}
           alt="Produk EVOMI"
           uploadPrefix="story"
@@ -330,7 +376,7 @@ export function StorySection({ draft, patch, patchImage }: EditorProps) {
 
       <div className="flex justify-between items-center mt-6 mb-4">
         <h3 className="font-semibold text-black/70">Card ({draft.story.cards.length})</h3>
-        <Button size="sm" onClick={() => patch((c) => ({ ...c, story: { ...c.story, cards: [...c.story.cards, { id: createId("story"), icon: "heart" as StoryIcon, title: "Judul Baru", body: "Deskripsi card", bg: "#60BBFF" }] } }))}>
+        <Button size="sm" onClick={() => patch((c) => ({ ...c, story: { ...c.story, cards: [...c.story.cards, { id: createId("story"), icon: "heart" as StoryIcon, title: "Judul Baru", titleColor: "#1172ba", body: "Deskripsi card", bg: "#60BBFF" }] } }))}>
           <Plus className="size-4" /> Tambah card
         </Button>
       </div>
@@ -340,6 +386,7 @@ export function StorySection({ draft, patch, patchImage }: EditorProps) {
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Icon" value={card.icon} onChange={(v) => patch((c) => ({ ...c, story: { ...c.story, cards: c.story.cards.map((x) => (x.id === card.id ? { ...x, icon: v as StoryIcon } : x)) } }))} hint="heart · leaf · sparkles" />
               <Field label="Warna icon box" value={card.bg} onChange={(v) => patch((c) => ({ ...c, story: { ...c.story, cards: c.story.cards.map((x) => (x.id === card.id ? { ...x, bg: v } : x)) } }))} />
+              <Field label="Warna judul (hex)" value={card.titleColor ?? ""} onChange={(v) => patch((c) => ({ ...c, story: { ...c.story, cards: c.story.cards.map((x) => (x.id === card.id ? { ...x, titleColor: v } : x)) } }))} hint="Contoh: #1172ba" />
             </div>
             <Field label="Judul" value={card.title} onChange={(v) => patch((c) => ({ ...c, story: { ...c.story, cards: c.story.cards.map((x) => (x.id === card.id ? { ...x, title: v } : x)) } }))} />
             <Field label="Isi" value={card.body} onChange={(v) => patch((c) => ({ ...c, story: { ...c.story, cards: c.story.cards.map((x) => (x.id === card.id ? { ...x, body: v } : x)) } }))} multiline />
@@ -365,7 +412,7 @@ export function ScentsSection({ draft, patch, patchImage }: EditorProps) {
 
       <div className="flex justify-between items-center mt-6 mb-4">
         <h3 className="font-semibold text-black/70">Card aroma ({draft.scents.cards.length})</h3>
-        <Button size="sm" onClick={() => patch((c) => ({ ...c, scents: { ...c.scents, cards: [...c.scents.cards, { id: createId("scent"), name: "Nama", sub: "Subtitle", color: "#1172ba", soft: "#60BBFF", emoji: "✨", imageUrl: "", vibe: "vibe...", desc: "deskripsi..." } satisfies ScentCard] } }))}>
+        <Button size="sm" onClick={() => patch((c) => ({ ...c, scents: { ...c.scents, cards: [...c.scents.cards, { id: createId("scent"), name: "Nama", sub: "Subtitle", color: "#1172ba", soft: "#ffffff", nameColor: "#000000", subColor: "#1172ba", vibeColor: "#4a4a4a", descColor: "#333333", emoji: "✨", imageUrl: "", stickerImageUrl: "", stickerColor: "#FFD521", vibe: "vibe...", desc: "deskripsi..." } satisfies ScentCard] } }))}>
           <Plus className="size-4" /> Tambah aroma
         </Button>
       </div>
@@ -381,13 +428,42 @@ export function ScentsSection({ draft, patch, patchImage }: EditorProps) {
               onChange={(url) => patchImage((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, imageUrl: url } : x)) } }))}
               previewClassName="w-full aspect-[3/4] max-h-56 rounded-xl"
             />
+            <ImageUploadField
+              label="Stiker pojok (ganti bintang berputar)"
+              hint="PNG transparan disarankan. Kosongkan untuk pakai bintang kuning."
+              imageUrl={card.stickerImageUrl ?? ""}
+              alt={`Stiker ${card.name}`}
+              uploadPrefix="scent-sticker"
+              onChange={(url) =>
+                patchImage((c) => ({
+                  ...c,
+                  scents: {
+                    ...c.scents,
+                    cards: c.scents.cards.map((x) =>
+                      x.id === card.id ? { ...x, stickerImageUrl: url } : x,
+                    ),
+                  },
+                }))
+              }
+              previewClassName="w-24 h-24 rounded-xl object-contain bg-[#fafafa]"
+            />
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Nama" value={card.name} onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, name: v } : x)) } }))} />
               <Field label="Subtitle" value={card.sub} onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, sub: v } : x)) } }))} />
-              <Field label="Emoji" value={card.emoji} onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, emoji: v } : x)) } }))} />
+              <Field label="Emoji (jika tanpa gambar atas)" value={card.emoji} onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, emoji: v } : x)) } }))} />
               <Field label="Vibe" value={card.vibe} onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, vibe: v } : x)) } }))} />
-              <Field label="Warna utama" value={card.color} onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, color: v } : x)) } }))} />
-              <Field label="Warna soft (background card)" value={card.soft} onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, soft: v } : x)) } }))} />
+            </div>
+            <FieldGroup title="Warna teks">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <ColorField label="Nama" value={card.nameColor ?? "#000000"} onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, nameColor: v } : x)) } }))} />
+                <ColorField label="Subtitle" value={card.subColor ?? card.color} onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, subColor: v } : x)) } }))} />
+                <ColorField label="Vibe" value={card.vibeColor ?? "#4a4a4a"} onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, vibeColor: v } : x)) } }))} />
+                <ColorField label="Deskripsi" value={card.descColor ?? "#333333"} onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, descColor: v } : x)) } }))} />
+              </div>
+            </FieldGroup>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Field label="Warna latar foto (atas)" value={card.color} onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, color: v } : x)) } }))} hint="Bukan warna teks — hanya belakang area gambar produk" />
+              <ColorField label="Bintang (jika tanpa stiker)" value={card.stickerColor ?? "#FFD521"} onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, stickerColor: v } : x)) } }))} />
             </div>
             <Field label="Deskripsi lengkap" value={card.desc} onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, desc: v } : x)) } }))} multiline />
           </CardShell>

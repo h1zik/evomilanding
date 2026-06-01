@@ -1,7 +1,15 @@
 import { useCallback, useRef, useState } from "react";
-import { Plus, RotateCw, Trash2, ZoomIn, ZoomOut } from "lucide-react";
+import { Copy, Monitor, Plus, RotateCw, Smartphone, Trash2, ZoomIn, ZoomOut } from "lucide-react";
 import type { HeroDecoration } from "@/content/types";
+import {
+  copyDesktopToMobile,
+  getDecorationLayout,
+  patchDecorationLayout,
+  type DecorationLayout,
+  type DecorationViewport,
+} from "@/content/heroDecorationLayout";
 import { createId } from "@/content/storage";
+import { cn } from "../../components/ui/utils";
 import { ImageUploadField } from "./ImageUploadField";
 import { Button } from "../../components/ui/button";
 import { Label } from "../../components/ui/label";
@@ -56,20 +64,22 @@ export function DecorationCanvasEditor({
   onDecorationImageChange: (id: string, url: string) => void;
 }) {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [viewMode, setViewMode] = useState<DecorationViewport>("desktop");
   const [selectedId, setSelectedId] = useState<string | null>(
     decorations[0]?.id ?? null,
   );
   const dragRef = useRef<DragState | null>(null);
 
   const selected = decorations.find((d) => d.id === selectedId);
+  const selectedLayout = selected ? getDecorationLayout(selected, viewMode) : null;
 
   const updateOne = useCallback(
-    (id: string, patch: Partial<HeroDecoration>) => {
+    (id: string, patch: Partial<DecorationLayout>) => {
       onChange((items) =>
-        items.map((d) => (d.id === id ? { ...d, ...patch } : d)),
+        items.map((d) => (d.id === id ? patchDecorationLayout(d, viewMode, patch) : d)),
       );
     },
-    [onChange],
+    [onChange, viewMode],
   );
 
   function handlePointerMove(clientX: number, clientY: number) {
@@ -120,6 +130,7 @@ export function DecorationCanvasEditor({
   }
 
   function startMove(e: React.PointerEvent, item: HeroDecoration) {
+    const layout = getDecorationLayout(item, viewMode);
     e.preventDefault();
     e.stopPropagation();
     setSelectedId(item.id);
@@ -129,12 +140,13 @@ export function DecorationCanvasEditor({
       id: item.id,
       startX: e.clientX,
       startY: e.clientY,
-      origX: item.x,
-      origY: item.y,
+      origX: layout.x,
+      origY: layout.y,
     };
   }
 
   function startResize(e: React.PointerEvent, item: HeroDecoration) {
+    const layout = getDecorationLayout(item, viewMode);
     e.preventDefault();
     e.stopPropagation();
     setSelectedId(item.id);
@@ -143,11 +155,12 @@ export function DecorationCanvasEditor({
       mode: "resize",
       id: item.id,
       startX: e.clientX,
-      origWidth: item.width,
+      origWidth: layout.width,
     };
   }
 
   function startRotate(e: React.PointerEvent, item: HeroDecoration, el: HTMLElement) {
+    const layout = getDecorationLayout(item, viewMode);
     e.preventDefault();
     e.stopPropagation();
     setSelectedId(item.id);
@@ -162,9 +175,13 @@ export function DecorationCanvasEditor({
       id: item.id,
       centerX,
       centerY,
-      origRotation: item.rotation,
+      origRotation: layout.rotation,
       startAngle,
     };
+  }
+
+  function copyAllLayoutsFromDesktop() {
+    onChange((items) => items.map(copyDesktopToMobile));
   }
 
   function addDecoration() {
@@ -184,15 +201,55 @@ export function DecorationCanvasEditor({
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex rounded-lg border border-black/10 bg-white p-1 shadow-sm">
+          <button
+            type="button"
+            onClick={() => setViewMode("desktop")}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition",
+              viewMode === "desktop"
+                ? "bg-[#1172ba] text-white"
+                : "text-black/55 hover:text-black/80",
+            )}
+          >
+            <Monitor className="size-4" />
+            Desktop
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("mobile")}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition",
+              viewMode === "mobile"
+                ? "bg-[#1172ba] text-white"
+                : "text-black/55 hover:text-black/80",
+            )}
+          >
+            <Smartphone className="size-4" />
+            Mobile
+          </button>
+        </div>
+        {viewMode === "mobile" && (
+          <Button type="button" size="sm" variant="outline" onClick={copyAllLayoutsFromDesktop}>
+            <Copy className="size-4" />
+            Salin posisi dari desktop
+          </Button>
+        )}
+      </div>
+
       <p className="text-sm text-black/55">
-        <strong>Tarik</strong> gambar untuk pindah · <strong>sudut kanan bawah</strong> untuk
-        perbesar/perkecil · <strong>lingkaran atas</strong> untuk putar. Bisa tarik ke luar area
-        (X/Y negatif atau &gt;100%) supaya gambar setengah tersembunyi di tepi halaman.
+        Atur dekor untuk <strong>{viewMode === "desktop" ? "layar lebar" : "HP"}</strong>.{" "}
+        <strong>Tarik</strong> untuk pindah · <strong>sudut kanan bawah</strong> ukuran ·{" "}
+        <strong>lingkaran atas</strong> putar. Bisa tarik ke luar area (X/Y &lt;0 atau &gt;100%).
       </p>
 
       <div
         ref={canvasRef}
-        className="relative w-full aspect-[16/10] min-h-[280px] rounded-2xl border-2 border-black/10 bg-[linear-gradient(45deg,#f5f5f5_25%,transparent_25%),linear-gradient(-45deg,#f5f5f5_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#f5f5f5_75%),linear-gradient(-45deg,transparent_75%,#f5f5f5_75%)] bg-[length:20px_20px] bg-[position:0_0,0_10px,10px_-10px,-10px_0px] overflow-visible touch-none"
+        className={cn(
+          "relative w-full min-h-[280px] rounded-2xl border-2 border-black/10 bg-[linear-gradient(45deg,#f5f5f5_25%,transparent_25%),linear-gradient(-45deg,#f5f5f5_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#f5f5f5_75%),linear-gradient(-45deg,transparent_75%,#f5f5f5_75%)] bg-[length:20px_20px] bg-[position:0_0,0_10px,10px_-10px,-10px_0px] overflow-visible touch-none",
+          viewMode === "mobile" ? "aspect-[9/16] max-w-sm mx-auto" : "aspect-[16/10]",
+        )}
         onPointerMove={onCanvasPointerMove}
         onPointerUp={endDrag}
         onPointerLeave={endDrag}
@@ -200,21 +257,22 @@ export function DecorationCanvasEditor({
       >
         <div className="absolute inset-x-[12%] inset-y-[8%] border-2 border-dashed border-[#1172ba]/30 rounded-xl pointer-events-none" />
         <p className="absolute top-2 left-1/2 -translate-x-1/2 text-[10px] tracking-widest text-black/35 uppercase pointer-events-none">
-          Area hero (desktop)
+          Area hero ({viewMode === "desktop" ? "desktop" : "mobile"})
         </p>
 
         {[...decorations]
           .sort((a, b) => a.zIndex - b.zIndex)
-          .map((item) =>
-            item.imageUrl ? (
+          .map((item) => {
+            const layout = getDecorationLayout(item, viewMode);
+            return item.imageUrl ? (
               <div
                 key={item.id}
                 className="absolute"
                 style={{
-                  left: `${item.x}%`,
-                  top: `${item.y}%`,
+                  left: `${layout.x}%`,
+                  top: `${layout.y}%`,
                   zIndex: item.zIndex + 10,
-                  transform: `translate(-50%, -50%) rotate(${item.rotation}deg)`,
+                  transform: `translate(-50%, -50%) rotate(${layout.rotation}deg)`,
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -251,7 +309,7 @@ export function DecorationCanvasEditor({
                     <img
                       src={item.imageUrl}
                       alt=""
-                      style={{ width: item.width }}
+                      style={{ width: layout.width }}
                       className="h-auto max-w-none pointer-events-none block"
                       draggable={false}
                     />
@@ -267,8 +325,8 @@ export function DecorationCanvasEditor({
                   )}
                 </div>
               </div>
-            ) : null,
-          )}
+            ) : null;
+          })}
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -278,10 +336,12 @@ export function DecorationCanvasEditor({
         </Button>
       </div>
 
-      {selected ? (
+      {selected && selectedLayout ? (
         <div className="rounded-xl border border-black/10 bg-white p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <Label className="font-medium">Edit dekor terpilih</Label>
+            <Label className="font-medium">
+              Edit dekor ({viewMode === "desktop" ? "desktop" : "mobile"})
+            </Label>
             <Button
               type="button"
               size="sm"
@@ -307,7 +367,7 @@ export function DecorationCanvasEditor({
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="text-xs text-black/50">Ukuran ({selected.width}px)</Label>
+              <Label className="text-xs text-black/50">Ukuran ({selectedLayout.width}px)</Label>
               <div className="flex gap-1">
                 <Button
                   type="button"
@@ -316,7 +376,7 @@ export function DecorationCanvasEditor({
                   className="size-8"
                   onClick={() =>
                     updateOne(selected.id, {
-                      width: clampWidth(selected.width - 16),
+                      width: clampWidth(selectedLayout.width - 16),
                     })
                   }
                 >
@@ -329,7 +389,7 @@ export function DecorationCanvasEditor({
                   className="size-8"
                   onClick={() =>
                     updateOne(selected.id, {
-                      width: clampWidth(selected.width + 16),
+                      width: clampWidth(selectedLayout.width + 16),
                     })
                   }
                 >
@@ -341,7 +401,7 @@ export function DecorationCanvasEditor({
               type="range"
               min={MIN_WIDTH}
               max={MAX_WIDTH}
-              value={selected.width}
+              value={selectedLayout.width}
               onChange={(e) =>
                 updateOne(selected.id, { width: clampWidth(Number(e.target.value)) })
               }
@@ -350,12 +410,12 @@ export function DecorationCanvasEditor({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs text-black/50">Rotasi ({selected.rotation}°)</Label>
+            <Label className="text-xs text-black/50">Rotasi ({selectedLayout.rotation}°)</Label>
             <input
               type="range"
               min={-180}
               max={180}
-              value={selected.rotation}
+              value={selectedLayout.rotation}
               onChange={(e) =>
                 updateOne(selected.id, { rotation: Number(e.target.value) })
               }
@@ -370,7 +430,7 @@ export function DecorationCanvasEditor({
                 type="number"
                 min={POS_MIN}
                 max={POS_MAX}
-                value={Math.round(selected.x)}
+                value={Math.round(selectedLayout.x)}
                 onChange={(e) =>
                   updateOne(selected.id, { x: clampPos(Number(e.target.value) || 0) })
                 }
@@ -383,7 +443,7 @@ export function DecorationCanvasEditor({
                 type="number"
                 min={POS_MIN}
                 max={POS_MAX}
-                value={Math.round(selected.y)}
+                value={Math.round(selectedLayout.y)}
                 onChange={(e) =>
                   updateOne(selected.id, { y: clampPos(Number(e.target.value) || 0) })
                 }

@@ -39,6 +39,47 @@ export function FieldGroup({
   );
 }
 
+function normalizeHex(hex: string): string {
+  if (!hex) return "#000000";
+  return hex.startsWith("#") ? hex : `#${hex}`;
+}
+
+export function ColorField({
+  label,
+  value,
+  onChange,
+  hint,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  hint?: string;
+}) {
+  const safe = normalizeHex(value || "#000000");
+
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-sm font-medium text-black/80">{label}</Label>
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={safe}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-10 w-12 shrink-0 cursor-pointer rounded-lg border border-black/15 bg-white"
+          aria-label={`${label} — pilih warna`}
+        />
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="#1172ba"
+          className="bg-white font-mono text-sm"
+        />
+      </div>
+      {hint && <p className="text-xs text-black/45">{hint}</p>}
+    </div>
+  );
+}
+
 export function Field({
   label,
   value,

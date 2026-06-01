@@ -31,10 +31,22 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    loadContent().then((data) => {
-      setContent(data);
-      setLoading(false);
-    });
+    let cancelled = false;
+
+    loadContent()
+      .then((data) => {
+        if (!cancelled) setContent(data);
+      })
+      .catch(() => {
+        if (!cancelled) setContent(defaultContent);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const updateContent = useCallback((next: LandingContent) => {
