@@ -125,7 +125,7 @@ export function EvomiLanding() {
   const { nav, hero, story, scents, waitlist, testimonials, footer } = content;
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-white text-black font-sans">
+    <div className="min-h-screen w-full overflow-x-clip bg-white text-black font-sans">
       {/* NAV */}
       <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/80">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-center">
@@ -244,43 +244,47 @@ export function EvomiLanding() {
               <Send className="w-5 h-5 group-hover:rotate-12 transition" />
             </a>
           </div>
+        </div>
 
-          {(() => {
-            const highlightItems = hero.highlights.filter((h) => h.imageUrl);
-            if (highlightItems.length === 0) return null;
+        {(() => {
+          const highlightItems = hero.highlights.filter((h) => h.imageUrl);
+          if (highlightItems.length === 0) return null;
 
-            const gridClass =
-              highlightItems.length === 1
-                ? "grid grid-cols-1"
-                : highlightItems.length === 2
-                  ? "grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4"
-                  : highlightItems.length === 3
-                    ? "grid grid-cols-1 md:grid-cols-[1fr_2fr_1fr] gap-3 md:gap-4 items-stretch"
-                    : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4";
+          const isSingle = highlightItems.length === 1;
+          const gridClass =
+            highlightItems.length === 2
+              ? "grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4"
+              : highlightItems.length === 3
+                ? "grid grid-cols-1 md:grid-cols-[1fr_2fr_1fr] gap-3 md:gap-4 items-center"
+                : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-center";
 
-            return (
-              <div className={`mt-12 w-full max-w-6xl mx-auto ${gridClass}`}>
+          return (
+            <div className="relative z-10 mt-12 w-full px-4 sm:px-6 lg:px-10">
+              <div
+                className={`mx-auto w-full ${isSingle ? "max-w-[min(100%,1280px)]" : "max-w-7xl"} ${isSingle ? "" : gridClass}`}
+              >
                 {highlightItems.map((h) => (
                   <img
                     key={h.id}
                     src={h.imageUrl}
                     alt={h.alt || "Kampanye EVOMI"}
-                    className="w-full h-auto block object-contain rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+                    className="block w-full h-auto max-w-full object-contain object-center rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+                    style={{ maxHeight: "none" }}
                   />
                 ))}
               </div>
-            );
-          })()}
-        </div>
+            </div>
+          );
+        })()}
       </section>
 
       {/* MARQUEE */}
       <Marquee items={content.marquee} />
 
       {/* STORY */}
-      <section id="story" className="relative py-24 px-6" style={{ backgroundColor: "#1172ba" }}>
-        <div className="max-w-7xl mx-auto text-white">
-          <div className="grid md:grid-cols-12 gap-10 items-end mb-16">
+      <section id="story" className="relative overflow-visible py-24 pb-28 px-6" style={{ backgroundColor: "#1172ba" }}>
+        <div className="max-w-7xl mx-auto text-white overflow-visible">
+          <div className="grid md:grid-cols-12 gap-8 lg:gap-12 items-center mb-16">
             <div className="md:col-span-7">
               <div className="inline-block px-3 py-1 rounded-full bg-[#FFD521] text-black tracking-tight mb-4">
                 {story.badge}
@@ -294,11 +298,11 @@ export function EvomiLanding() {
               </h2>
             </div>
             {story.sideImageUrl && (
-              <div className="md:col-span-5">
+              <div className="md:col-span-5 w-full overflow-visible flex items-center justify-center">
                 <img
                   src={story.sideImageUrl}
                   alt="Cerita EVOMI"
-                  className="w-full h-auto object-cover aspect-[4/3]"
+                  className="w-full h-auto max-w-full object-contain object-center block"
                 />
               </div>
             )}
