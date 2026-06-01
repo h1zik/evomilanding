@@ -10,6 +10,18 @@ export const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+/** Untuk log / health — host database (tanpa password) */
+export function getDatabaseHost(): string | null {
+  const url = process.env.DATABASE_URL?.trim();
+  if (!url) return null;
+  try {
+    const parsed = new URL(url.replace(/^postgresql:/, "http:"));
+    return parsed.hostname || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function initDatabase() {
   const client = await pool.connect();
   try {
@@ -45,7 +57,11 @@ export async function initDatabase() {
         `INSERT INTO site_content (id, data) VALUES ('main', $1::jsonb)`,
         [JSON.stringify(seed)],
       );
-      console.log("[db] Seeded site_content from content.json");
+      console.warn(
+        "[db] Database kosong — diisi seed dari content.json. Pastikan PostgreSQL persisten (Railway: service Postgres terpisah + DATABASE_URL reference).",
+      );
+    } else {
+      console.log("[db] site_content sudah ada — tidak di-overwrite");
     }
   } finally {
     client.release();

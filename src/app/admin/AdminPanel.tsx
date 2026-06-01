@@ -66,21 +66,20 @@ export function AdminPanel() {
     return <Navigate to="/admin" replace />;
   }
 
-  const { content, updateContent, saveContent, resetContent, saving } = useContent();
+  const { content, loading, updateContent, saveContent, resetContent, saving } = useContent();
   const [draft, setDraft] = useState<LandingContent>(content);
   const [view, setView] = useState<AdminView>("dashboard");
   const [isDirty, setIsDirty] = useState(false);
   const [leadCount, setLeadCount] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
-  const initialLoad = useRef(true);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /** Sinkronkan draft dari server setelah load — jangan pakai initialLoad sekali (bug: draft tertinggal default) */
   useEffect(() => {
-    if (initialLoad.current) {
+    if (!loading && !isDirty) {
       setDraft(content);
-      initialLoad.current = false;
     }
-  }, [content]);
+  }, [content, loading, isDirty]);
 
   useEffect(() => {
     fetchSubmissions().then((list) => setLeadCount(list.length));
@@ -92,6 +91,19 @@ export function AdminPanel() {
     };
   }, []);
 
+  function flushSave(next: LandingContent) {
+    return saveContent(next).then(({ serverSaved }) => {
+      if (serverSaved) {
+        updateContent(next);
+        setIsDirty(false);
+      } else {
+        setIsDirty(true);
+        toast.error("Gagal menyimpan — pastikan API & database aktif");
+      }
+      return serverSaved;
+    });
+  }
+
   function patch(updater: (prev: LandingContent) => LandingContent) {
     setDraft((prev) => {
       const next = updater(prev);
@@ -99,14 +111,19 @@ export function AdminPanel() {
 
       if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
       autosaveTimer.current = setTimeout(() => {
-        void saveContent(next).then(({ serverSaved }) => {
-          if (serverSaved) {
-            updateContent(next);
-            setIsDirty(false);
-          }
-        });
+        void flushSave(next);
       }, 1500);
 
+      return next;
+    });
+  }
+
+  /** Upload gambar: simpan ke DB segera (URL + file harus persisten) */
+  function patchImage(updater: (prev: LandingContent) => LandingContent) {
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    setDraft((prev) => {
+      const next = updater(prev);
+      void flushSave(next);
       return next;
     });
   }
@@ -139,7 +156,7 @@ export function AdminPanel() {
   }
 
   function renderContent() {
-    const props = { draft, patch };
+    const props = { draft, patch, patchImage };
     switch (view) {
       case "hero":
         return <HeroSection {...props} />;

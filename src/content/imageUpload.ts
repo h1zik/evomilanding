@@ -28,12 +28,13 @@ export async function uploadImage(file: File, prefix = "upload"): Promise<string
     return url;
   }
 
-  if (import.meta.env.DEV) {
-    const err = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(err.error ?? "Upload gagal — pastikan dev server sedang berjalan");
-  }
-
-  return dataUrl;
+  const err = (await res.json().catch(() => ({}))) as { error?: string };
+  throw new Error(
+    err.error ??
+      (import.meta.env.DEV
+        ? "Upload gagal — jalankan npm run dev (API + database)"
+        : "Upload gagal — cek UPLOAD_PUBLIC_DIR / volume di Railway"),
+  );
 }
 
 /** @deprecated use uploadImage */

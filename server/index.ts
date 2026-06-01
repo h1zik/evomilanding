@@ -4,7 +4,7 @@ import express from "express";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { initDatabase, pool } from "./db.js";
+import { getDatabaseHost, initDatabase, pool } from "./db.js";
 import { ensureUploadsDir, resolveUploadsDir } from "./uploadPaths.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -22,11 +22,27 @@ app.use("/uploads", express.static(uploadsDir));
 app.get("/api/health", async (_req, res) => {
   try {
     await pool.query("SELECT 1");
-    res.json({ ok: true, database: "connected" });
+    const counts = await pool.query<{ content_rows: string; waitlist_rows: string }>(
+      `SELECT
+        (SELECT COUNT(*)::text FROM site_content) AS content_rows,
+        (SELECT COUNT(*)::text FROM waitlist_submissions) AS waitlist_rows`,
+    );
+    const row = counts.rows[0];
+    res.json({
+      ok: true,
+      database: "connected",
+      dbHost: getDatabaseHost(),
+      contentRows: Number(row?.content_rows ?? 0),
+      waitlistRows: Number(row?.waitlist_rows ?? 0),
+      uploadsDir,
+      persistentHint:
+        "Konten & waitlist di PostgreSQL. Upload gambar perlu UPLOAD_PUBLIC_DIR + volume di Railway.",
+    });
   } catch (err) {
     res.status(503).json({
       ok: false,
       error: err instanceof Error ? err.message : "Database unavailable",
+      dbHost: getDatabaseHost(),
     });
   }
 });
@@ -211,7 +227,7 @@ async function start() {
   attachFrontend();
   app.listen(port, "0.0.0.0", () => {
     console.log(`[api] Server running at http://localhost:${port}`);
-    console.log(`[api] PostgreSQL connected`);
+    console.log(`[api] PostgreSQL connected (host: ${getDatabaseHost() ?? "?"})`);
     console.log(`[api] Uploads directory: ${uploadsDir}`);
   });
 }

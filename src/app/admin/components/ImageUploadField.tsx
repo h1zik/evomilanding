@@ -33,7 +33,7 @@ export function ImageUploadField({
     try {
       const url = await uploadImage(file, uploadPrefix);
       onChange(url);
-      toast.success("Gambar berhasil diupload");
+      toast.success("Gambar terupload — menyimpan ke server…");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload gagal");
     } finally {

@@ -15,7 +15,13 @@ import { DecorationCanvasEditor } from "./components/DecorationCanvasEditor";
 
 type PatchFn = (updater: (prev: LandingContent) => LandingContent) => void;
 
-export function HeroSection({ draft, patch }: { draft: LandingContent; patch: PatchFn }) {
+type EditorProps = {
+  draft: LandingContent;
+  patch: PatchFn;
+  patchImage: PatchFn;
+};
+
+export function HeroSection({ draft, patch, patchImage }: EditorProps) {
   return (
     <div>
       <SectionHeader
@@ -27,7 +33,7 @@ export function HeroSection({ draft, patch }: { draft: LandingContent; patch: Pa
           <BrandLogoUpload
             logoUrl={draft.nav.brandLogoUrl ?? ""}
             brandName={draft.nav.brandName}
-            onChange={(url) => patch((c) => ({ ...c, nav: { ...c.nav, brandLogoUrl: url } }))}
+            onChange={(url) => patchImage((c) => ({ ...c, nav: { ...c.nav, brandLogoUrl: url } }))}
           />
           <Field
             label="Nama brand (teks di samping logo)"
@@ -105,7 +111,7 @@ export function HeroSection({ draft, patch }: { draft: LandingContent; patch: Pa
                   alt={m.name}
                   uploadPrefix="mascot"
                   onChange={(url) =>
-                    patch((c) => ({
+                    patchImage((c) => ({
                       ...c,
                       hero: {
                         ...c.hero,
@@ -156,7 +162,8 @@ export function HeroSection({ draft, patch }: { draft: LandingContent; patch: Pa
 
         <FieldGroup title="Strip gambar bawah hero (kampanye / recycle)">
           <p className="text-sm text-black/55 mb-3">
-            Gambar horizontal di bawah tombol CTA. Hapus kartu yang tidak dipakai — tidak tampil di landing jika tidak ada gambar.
+            Gambar horizontal di bawah tombol CTA. Satu gambar = lebar penuh; tiga gambar = kiri & kanan
+            kotak, tengah lebih lebar (seperti desain). Upload gambar landscape, jangan dipotong kotak.
           </p>
           <div className="flex justify-between items-center mb-3">
             <p className="text-sm text-black/55">{draft.hero.highlights.length} kartu</p>
@@ -210,7 +217,7 @@ export function HeroSection({ draft, patch }: { draft: LandingContent; patch: Pa
                   alt={h.alt}
                   uploadPrefix="hero-highlight"
                   onChange={(url) =>
-                    patch((c) => ({
+                    patchImage((c) => ({
                       ...c,
                       hero: {
                         ...c.hero,
@@ -220,7 +227,7 @@ export function HeroSection({ draft, patch }: { draft: LandingContent; patch: Pa
                       },
                     }))
                   }
-                  previewClassName="w-full aspect-[4/3] max-h-40"
+                  previewClassName="w-full max-h-32 object-contain bg-[#fafafa]"
                 />
                 <Field
                   label="Teks alternatif (aksesibilitas)"
@@ -251,6 +258,17 @@ export function HeroSection({ draft, patch }: { draft: LandingContent; patch: Pa
                 hero: { ...c.hero, decorations: updater(c.hero.decorations) },
               }))
             }
+            onDecorationImageChange={(id, url) =>
+              patchImage((c) => ({
+                ...c,
+                hero: {
+                  ...c.hero,
+                  decorations: c.hero.decorations.map((d) =>
+                    d.id === id ? { ...d, imageUrl: url } : d,
+                  ),
+                },
+              }))
+            }
           />
         </FieldGroup>
       </div>
@@ -258,7 +276,7 @@ export function HeroSection({ draft, patch }: { draft: LandingContent; patch: Pa
   );
 }
 
-export function MarqueeSection({ draft, patch }: { draft: LandingContent; patch: PatchFn }) {
+export function MarqueeSection({ draft, patch }: EditorProps) {
   return (
     <div>
       <SectionHeader
@@ -283,7 +301,7 @@ export function MarqueeSection({ draft, patch }: { draft: LandingContent; patch:
   );
 }
 
-export function StorySection({ draft, patch }: { draft: LandingContent; patch: PatchFn }) {
+export function StorySection({ draft, patch, patchImage }: EditorProps) {
   return (
     <div>
       <SectionHeader title="Cerita Kami" description="Section biru dengan judul utama dan card-card value proposition." />
@@ -305,7 +323,7 @@ export function StorySection({ draft, patch }: { draft: LandingContent; patch: P
           imageUrl={draft.story.sideImageUrl ?? ""}
           alt="Cerita EVOMI"
           uploadPrefix="story"
-          onChange={(url) => patch((c) => ({ ...c, story: { ...c.story, sideImageUrl: url } }))}
+          onChange={(url) => patchImage((c) => ({ ...c, story: { ...c.story, sideImageUrl: url } }))}
           previewClassName="w-full aspect-[4/3] max-h-56 rounded-xl"
         />
       </FieldGroup>
@@ -332,7 +350,7 @@ export function StorySection({ draft, patch }: { draft: LandingContent; patch: P
   );
 }
 
-export function ScentsSection({ draft, patch }: { draft: LandingContent; patch: PatchFn }) {
+export function ScentsSection({ draft, patch, patchImage }: EditorProps) {
   return (
     <div>
       <SectionHeader title="Koleksi Aroma" description="Grid card produk parfum — upload gambar produk atau pakai emoji sebagai fallback." />
@@ -360,7 +378,7 @@ export function ScentsSection({ draft, patch }: { draft: LandingContent; patch: 
               imageUrl={card.imageUrl ?? ""}
               alt={card.name}
               uploadPrefix="scent"
-              onChange={(url) => patch((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, imageUrl: url } : x)) } }))}
+              onChange={(url) => patchImage((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, imageUrl: url } : x)) } }))}
               previewClassName="w-full aspect-[3/4] max-h-56 rounded-xl"
             />
             <div className="grid sm:grid-cols-2 gap-4">
@@ -379,7 +397,7 @@ export function ScentsSection({ draft, patch }: { draft: LandingContent; patch: 
   );
 }
 
-export function WaitlistFormSection({ draft, patch }: { draft: LandingContent; patch: PatchFn }) {
+export function WaitlistFormSection({ draft, patch }: EditorProps) {
   return (
     <div>
       <SectionHeader title="Section Waitlist & Form" description="Teks promosi di kiri dan label/konten form pendaftaran di kanan." />
@@ -420,7 +438,7 @@ export function WaitlistFormSection({ draft, patch }: { draft: LandingContent; p
   );
 }
 
-export function TestimonialsSection({ draft, patch }: { draft: LandingContent; patch: PatchFn }) {
+export function TestimonialsSection({ draft, patch }: EditorProps) {
   return (
     <div>
       <SectionHeader title="Testimonial Komunitas" description="Social proof dari komunitas — card dengan username dan quote." />
@@ -451,7 +469,7 @@ export function TestimonialsSection({ draft, patch }: { draft: LandingContent; p
   );
 }
 
-export function FooterSection({ draft, patch }: { draft: LandingContent; patch: PatchFn }) {
+export function FooterSection({ draft, patch }: EditorProps) {
   return (
     <div>
       <SectionHeader title="Footer" description="Informasi brand, link sosial, dan teks legal di bagian bawah halaman." />

@@ -49,9 +49,11 @@ function clampWidth(w: number) {
 export function DecorationCanvasEditor({
   decorations,
   onChange,
+  onDecorationImageChange,
 }: {
   decorations: HeroDecoration[];
   onChange: PatchDecorations;
+  onDecorationImageChange: (id: string, url: string) => void;
 }) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(
@@ -299,7 +301,7 @@ export function DecorationCanvasEditor({
             imageUrl={selected.imageUrl}
             alt="Dekor hero"
             uploadPrefix="hero-deco"
-            onChange={(url) => updateOne(selected.id, { imageUrl: url })}
+            onChange={(url) => onDecorationImageChange(selected.id, url)}
             previewClassName="w-full max-h-40 aspect-video"
           />
 
@@ -407,7 +409,7 @@ export function DecorationCanvasEditor({
               imageUrl=""
               alt="Dekor"
               uploadPrefix="hero-deco"
-              onChange={(url) => updateOne(d.id, { imageUrl: url })}
+              onChange={(url) => onDecorationImageChange(d.id, url)}
             />
           </div>
         ))}

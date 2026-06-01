@@ -245,24 +245,32 @@ export function EvomiLanding() {
             </a>
           </div>
 
-          {hero.highlights.some((h) => h.imageUrl) && (
-            <div className="mt-12 w-full max-w-4xl grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {hero.highlights
-                .filter((h) => h.imageUrl)
-                .map((h) => (
-                  <div
+          {(() => {
+            const highlightItems = hero.highlights.filter((h) => h.imageUrl);
+            if (highlightItems.length === 0) return null;
+
+            const gridClass =
+              highlightItems.length === 1
+                ? "grid grid-cols-1"
+                : highlightItems.length === 2
+                  ? "grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4"
+                  : highlightItems.length === 3
+                    ? "grid grid-cols-1 md:grid-cols-[1fr_2fr_1fr] gap-3 md:gap-4 items-stretch"
+                    : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4";
+
+            return (
+              <div className={`mt-12 w-full max-w-6xl mx-auto ${gridClass}`}>
+                {highlightItems.map((h) => (
+                  <img
                     key={h.id}
-                    className="rounded-2xl overflow-hidden border-2 border-black shadow-[4px_4px_0_0_#000] bg-white"
-                  >
-                    <img
-                      src={h.imageUrl}
-                      alt={h.alt || "Kampanye EVOMI"}
-                      className="w-full h-auto object-cover aspect-[4/3]"
-                    />
-                  </div>
+                    src={h.imageUrl}
+                    alt={h.alt || "Kampanye EVOMI"}
+                    className="w-full h-auto block object-contain rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+                  />
                 ))}
-            </div>
-          )}
+              </div>
+            );
+          })()}
         </div>
       </section>
 

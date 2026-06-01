@@ -8,9 +8,7 @@
     "start": "tsx server/index.ts",
     "dev": "concurrently -n web,api -c blue,green \"npm run dev:web\" \"npm run dev:api\"",
     "dev:web": "vite",
-    "dev:api": "tsx watch server/index.ts",
-    "db:up": "docker compose up -d",
-    "db:down": "docker compose down"
+    "dev:api": "tsx watch server/index.ts"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
