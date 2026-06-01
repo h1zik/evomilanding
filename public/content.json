@@ -1,0 +1,216 @@
+{
+  "nav": {
+    "brandName": "evomi.id",
+    "brandLogoUrl": ""
+  },
+  "hero": {
+    "counterLabel": "LIVE COUNTER",
+    "counterSuffix": "orang sudah masuk waitlist ✨",
+    "counterStart": 2847,
+    "titleLine1": "Temukan karakter",
+    "titleHighlight": "aromamu",
+    "titleLine2": "di Evomi",
+    "description": "EVOMI bukan parfum biasa. ini medium ekspresi diri buat Gen Z yang nggak takut jadi **setiap versi dari diri sendiri**. 4 karakter, 4 mood, 4 versi kamu.",
+    "ctaText": "amankan tempatmu"
+  },
+  "marquee": [
+    {
+      "id": "m1",
+      "text": "✦ SETIAP VERSI DARI AKU"
+    },
+    {
+      "id": "m2",
+      "text": "·"
+    },
+    {
+      "id": "m3",
+      "text": "SOFT LAUNCH 2026",
+      "color": "#FFD521"
+    },
+    {
+      "id": "m4",
+      "text": "·"
+    },
+    {
+      "id": "m5",
+      "text": "4 AROMA, 4 KARAKTER"
+    },
+    {
+      "id": "m6",
+      "text": "·"
+    },
+    {
+      "id": "m7",
+      "text": "RAMAH LINGKUNGAN",
+      "color": "#F899C6"
+    },
+    {
+      "id": "m8",
+      "text": "·"
+    }
+  ],
+  "story": {
+    "badge": "◉ cerita kami",
+    "titlePart1": "Evomi menjadi medium ",
+    "titleHighlight1": "ekspresi personal",
+    "titlePart2": ", bukan sekadar ",
+    "titleHighlight2": "wewangian",
+    "titlePart3": ".",
+    "sideImageUrl": "/uploads/story-1780296008781.png",
+    "cards": [
+      {
+        "id": "story-1",
+        "icon": "heart",
+        "title": "Sadar Diri",
+        "body": "tiap aroma = versi diri yang berbeda. ekspresi personal, bukan sekadar wewangian.",
+        "bg": "#60BBFF"
+      },
+      {
+        "id": "story-2",
+        "icon": "leaf",
+        "title": "Ramah Lingkungan",
+        "body": "tutup botol dari plastik daur ulang. langkah kecil, dampak besar 🌱",
+        "bg": "#A5E194"
+      },
+      {
+        "id": "story-3",
+        "icon": "sparkles",
+        "title": "Desain Playful",
+        "body": "visual ekspresif & dekat sama Gen Z. pengalaman pakai parfum yang menyenangkan.",
+        "bg": "#F899C6"
+      }
+    ]
+  },
+  "scents": {
+    "titleBefore": "kenalan sama ",
+    "titleHighlight": "keluarga",
+    "titleAfter": "nya.",
+    "description": "pilih yang paling kena di hati. atau koleksi semuanya — kita nggak gatekeep kok.",
+    "cards": [
+      {
+        "id": "scent-1",
+        "name": "Purpose",
+        "sub": "Prestige",
+        "color": "#1172ba",
+        "soft": "#60BBFF",
+        "emoji": "🔵",
+        "imageUrl": "",
+        "vibe": "tenang. percaya diri. fokus.",
+        "desc": "buat momen jadi tokoh utama. ketenangan & kepercayaan diri dalam satu botol."
+      },
+      {
+        "id": "scent-2",
+        "name": "Rebel",
+        "sub": "Brave",
+        "color": "#E33D35",
+        "soft": "#FF8A84",
+        "emoji": "🔥",
+        "imageUrl": "",
+        "vibe": "lantang. berani. tanpa ragu.",
+        "desc": "buat kamu yang nggak takut tampil beda. energi & semangat yang nge-pop."
+      },
+      {
+        "id": "scent-3",
+        "name": "Peaceful",
+        "sub": "Calm",
+        "color": "#5EA14A",
+        "soft": "#A5E194",
+        "emoji": "🌿",
+        "imageUrl": "",
+        "vibe": "lembut. membumi. seimbang.",
+        "desc": "vibes hutan pagi. menenangkan, seimbang, dan menyatu dengan diri."
+      },
+      {
+        "id": "scent-4",
+        "name": "Sweet",
+        "sub": "Shy",
+        "color": "#DD74A5",
+        "soft": "#F899C6",
+        "emoji": "🍓",
+        "imageUrl": "",
+        "vibe": "hangat. lembut. bikin meleleh.",
+        "desc": "manis tapi tetap berkelas. sisi lembut & penuh empati versi terbaik kamu."
+      }
+    ]
+  },
+  "waitlist": {
+    "badge": "limited drop · 1000 botol pertama",
+    "titleBefore": "Gabung Waitlist sekarang dan dapatkan voucher diskon ",
+    "discountPercent": "20%",
+    "description": "tinggalkan nomor WA kamu, kita kabarin pas EVOMI launch + diskon early bird **30%** khusus waitlist 💌",
+    "counterLabel": "ORANG NGANTRI · LIVE",
+    "form": {
+      "title": "yuk daftar 💅",
+      "subtitle": "isi formnya, 30 detik aja kok.",
+      "nameLabel": "nama kamu",
+      "namePlaceholder": "contoh: Naya",
+      "whatsappLabel": "nomor whatsapp",
+      "whatsappPlaceholder": "812 3456 7890",
+      "vibeLabel": "vibe kamu sekarang",
+      "submitText": "daftarkan aku",
+      "disclaimer": "dengan gabung, kamu setuju menerima update via WA dari EVOMI. bisa berhenti kapan aja.",
+      "successTitle": "kamu masuk, {name}! ✨",
+      "successMessage": "kita kabarin via WA pas **{scent}** rilis. kamu antrian ke #{count}.",
+      "referText": "daftarkan teman juga →"
+    },
+    "errors": {
+      "whatsapp": "nomor WA-nya kurang lengkap nih bestie 📱",
+      "name": "nama dulu dong, biar kita kenalan 💌"
+    },
+    "toastSuccess": "kamu masuk waitlist! cek WA-mu ya ✨"
+  },
+  "testimonials": {
+    "titleBefore": "kata ",
+    "titleHighlight": "komunitas",
+    "titleAfter": ":",
+    "cards": [
+      {
+        "id": "testimonial-1",
+        "who": "@nayskee",
+        "color": "#60BBFF",
+        "text": "first impression dari botolnya aja udah aesthetic banget. nggak sabar coba Rebel Brave 🔥"
+      },
+      {
+        "id": "testimonial-2",
+        "who": "@bagasdpr",
+        "color": "#A5E194",
+        "text": "konsep 'setiap versi dari aku' relate parah. akhirnya parfum yang ngerti mood swing aku 😭"
+      },
+      {
+        "id": "testimonial-3",
+        "who": "@kikyrn_",
+        "color": "#F899C6",
+        "text": "tutup botol dari plastik daur ulang? sustainable + cute = ambil duitku 💸"
+      }
+    ]
+  },
+  "footer": {
+    "brandName": "evomi.id",
+    "tagline": "setiap versi dari aku. parfum buat generasi yang nolak jadi satu wajah aja.",
+    "socialTitle": "TERHUBUNG",
+    "socialLinks": [
+      {
+        "id": "social-1",
+        "label": "@evomi.id di instagram",
+        "href": "#"
+      },
+      {
+        "id": "social-2",
+        "label": "@evomi di tiktok",
+        "href": "#"
+      },
+      {
+        "id": "social-3",
+        "label": "halo@evomi.id",
+        "href": "#"
+      }
+    ],
+    "legalTitle": "LEGAL",
+    "legalItems": [
+      "kebijakan privasi",
+      "syarat & ketentuan",
+      "© 2026 evomi.id"
+    ],
+    "bottomText": "DIBUAT DENGAN 💛 DI INDONESIA"
+  }
+}

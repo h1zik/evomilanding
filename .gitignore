@@ -1,0 +1,19 @@
+# Dependencies & build
+node_modules/
+dist/
+.vite/
+
+# Secrets (commit .env.example only)
+.env
+.env.*
+!.env.example
+
+# Logs & OS
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Editor (optional local settings)
+.idea/
+.vscode/
