@@ -1,5 +1,22 @@
-import type { LandingContent } from "./types";
+import type { HeroDecoration, HeroHighlight, HeroMascot, LandingContent } from "./types";
 import { defaultContent } from "./defaultContent";
+
+function mascotsFromScents(content: LandingContent): HeroMascot[] {
+  return content.scents.cards.map((card) => ({
+    id: card.id,
+    name: card.name,
+    sub: card.sub,
+    imageUrl: card.imageUrl ?? "",
+  }));
+}
+
+function defaultHighlights(): HeroHighlight[] {
+  return defaultContent.hero.highlights;
+}
+
+function defaultDecorations(): HeroDecoration[] {
+  return defaultContent.hero.decorations;
+}
 
 const STORAGE_KEY = "evomi-landing-content";
 
@@ -68,6 +85,34 @@ function normalizeContent(content: LandingContent): LandingContent {
         ...card,
         imageUrl: card.imageUrl ?? "",
       })),
+    },
+    hero: {
+      ...defaultContent.hero,
+      ...content.hero,
+      mascots:
+        content.hero?.mascots && content.hero.mascots.length > 0
+          ? content.hero.mascots.map((m) => ({
+              ...m,
+              imageUrl: m.imageUrl ?? "",
+            }))
+          : mascotsFromScents(content),
+      decorations: (content.hero?.decorations ?? defaultDecorations()).map((d) => ({
+        id: d.id,
+        imageUrl: d.imageUrl ?? "",
+        x: typeof d.x === "number" ? d.x : 50,
+        y: typeof d.y === "number" ? d.y : 50,
+        width: typeof d.width === "number" ? d.width : 120,
+        rotation: typeof d.rotation === "number" ? d.rotation : 0,
+        zIndex: typeof d.zIndex === "number" ? d.zIndex : 1,
+      })),
+      highlights:
+        content.hero?.highlights != null
+          ? content.hero.highlights.map((h) => ({
+              ...h,
+              imageUrl: h.imageUrl ?? "",
+              alt: h.alt ?? "",
+            }))
+          : defaultHighlights(),
     },
   };
 }

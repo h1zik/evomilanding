@@ -11,6 +11,7 @@ import {
 } from "./components/AdminFields";
 import { BrandLogoUpload } from "./components/BrandLogoUpload";
 import { ImageUploadField } from "./components/ImageUploadField";
+import { DecorationCanvasEditor } from "./components/DecorationCanvasEditor";
 
 type PatchFn = (updater: (prev: LandingContent) => LandingContent) => void;
 
@@ -51,6 +52,206 @@ export function HeroSection({ draft, patch }: { draft: LandingContent; patch: Pa
           <Field label="Baris judul 2" value={draft.hero.titleLine2} onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, titleLine2: v } }))} />
           <Field label="Deskripsi" value={draft.hero.description} onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, description: v } }))} multiline hint="Gunakan **teks** untuk bold" />
           <Field label="Teks tombol CTA" value={draft.hero.ctaText} onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, ctaText: v } }))} />
+        </FieldGroup>
+
+        <FieldGroup title="Maskot hero (baris karakter)">
+          <p className="text-sm text-black/55 mb-3">
+            Upload gambar maskot dan atur nama. Tampil di bawah deskripsi, di atas tombol CTA.
+          </p>
+          <div className="flex justify-end mb-3">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                patch((c) => ({
+                  ...c,
+                  hero: {
+                    ...c.hero,
+                    mascots: [
+                      ...c.hero.mascots,
+                      {
+                        id: createId("mascot"),
+                        name: "Nama",
+                        sub: "Subtitle",
+                        imageUrl: "",
+                      },
+                    ],
+                  },
+                }))
+              }
+            >
+              <Plus className="size-4" /> Tambah maskot
+            </Button>
+          </div>
+          <div className="space-y-4">
+            {draft.hero.mascots.map((m, i) => (
+              <CardShell
+                key={m.id}
+                title={`Maskot ${i + 1}`}
+                subtitle={`${m.name} ${m.sub}`.trim()}
+                onDelete={() =>
+                  patch((c) => ({
+                    ...c,
+                    hero: {
+                      ...c.hero,
+                      mascots: c.hero.mascots.filter((x) => x.id !== m.id),
+                    },
+                  }))
+                }
+              >
+                <ImageUploadField
+                  label="Gambar maskot"
+                  imageUrl={m.imageUrl}
+                  alt={m.name}
+                  uploadPrefix="mascot"
+                  onChange={(url) =>
+                    patch((c) => ({
+                      ...c,
+                      hero: {
+                        ...c.hero,
+                        mascots: c.hero.mascots.map((x) =>
+                          x.id === m.id ? { ...x, imageUrl: url } : x,
+                        ),
+                      },
+                    }))
+                  }
+                  previewClassName="w-full max-h-36 aspect-square"
+                />
+                <div className="grid sm:grid-cols-2 gap-4 mt-3">
+                  <Field
+                    label="Nama"
+                    value={m.name}
+                    onChange={(v) =>
+                      patch((c) => ({
+                        ...c,
+                        hero: {
+                          ...c.hero,
+                          mascots: c.hero.mascots.map((x) =>
+                            x.id === m.id ? { ...x, name: v } : x,
+                          ),
+                        },
+                      }))
+                    }
+                  />
+                  <Field
+                    label="Subtitle (italic)"
+                    value={m.sub}
+                    onChange={(v) =>
+                      patch((c) => ({
+                        ...c,
+                        hero: {
+                          ...c.hero,
+                          mascots: c.hero.mascots.map((x) =>
+                            x.id === m.id ? { ...x, sub: v } : x,
+                          ),
+                        },
+                      }))
+                    }
+                  />
+                </div>
+              </CardShell>
+            ))}
+          </div>
+        </FieldGroup>
+
+        <FieldGroup title="Strip gambar bawah hero (kampanye / recycle)">
+          <p className="text-sm text-black/55 mb-3">
+            Gambar horizontal di bawah tombol CTA. Hapus kartu yang tidak dipakai — tidak tampil di landing jika tidak ada gambar.
+          </p>
+          <div className="flex justify-between items-center mb-3">
+            <p className="text-sm text-black/55">{draft.hero.highlights.length} kartu</p>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                patch((c) => ({
+                  ...c,
+                  hero: {
+                    ...c.hero,
+                    highlights: [
+                      ...c.hero.highlights,
+                      {
+                        id: createId("hl"),
+                        imageUrl: "",
+                        alt: "Kampanye",
+                      },
+                    ],
+                  },
+                }))
+              }
+            >
+              <Plus className="size-4" /> Tambah kartu
+            </Button>
+          </div>
+          <div className="space-y-4">
+            {draft.hero.highlights.length === 0 && (
+              <p className="text-sm text-black/45 italic py-4 text-center border border-dashed rounded-xl">
+                Belum ada kartu kampanye — klik Tambah kartu atau biarkan kosong.
+              </p>
+            )}
+            {draft.hero.highlights.map((h, i) => (
+              <CardShell
+                key={h.id}
+                title={`Gambar ${i + 1}`}
+                subtitle={h.alt || (h.imageUrl ? "Ada gambar" : "Kosong")}
+                onDelete={() =>
+                  patch((c) => ({
+                    ...c,
+                    hero: {
+                      ...c.hero,
+                      highlights: c.hero.highlights.filter((x) => x.id !== h.id),
+                    },
+                  }))
+                }
+              >
+                <ImageUploadField
+                  label="Gambar"
+                  imageUrl={h.imageUrl}
+                  alt={h.alt}
+                  uploadPrefix="hero-highlight"
+                  onChange={(url) =>
+                    patch((c) => ({
+                      ...c,
+                      hero: {
+                        ...c.hero,
+                        highlights: c.hero.highlights.map((x) =>
+                          x.id === h.id ? { ...x, imageUrl: url } : x,
+                        ),
+                      },
+                    }))
+                  }
+                  previewClassName="w-full aspect-[4/3] max-h-40"
+                />
+                <Field
+                  label="Teks alternatif (aksesibilitas)"
+                  value={h.alt}
+                  onChange={(v) =>
+                    patch((c) => ({
+                      ...c,
+                      hero: {
+                        ...c.hero,
+                        highlights: c.hero.highlights.map((x) =>
+                          x.id === h.id ? { ...x, alt: v } : x,
+                        ),
+                      },
+                    }))
+                  }
+                />
+              </CardShell>
+            ))}
+          </div>
+        </FieldGroup>
+
+        <FieldGroup title="Dekorasi hero (drag & drop)">
+          <DecorationCanvasEditor
+            decorations={draft.hero.decorations}
+            onChange={(updater) =>
+              patch((c) => ({
+                ...c,
+                hero: { ...c.hero, decorations: updater(c.hero.decorations) },
+              }))
+            }
+          />
         </FieldGroup>
       </div>
     </div>

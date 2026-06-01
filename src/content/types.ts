@@ -39,6 +39,32 @@ export interface SocialLink {
   href: string;
 }
 
+/** Maskot di hero (baris karakter di bawah deskripsi) */
+export interface HeroMascot {
+  id: string;
+  name: string;
+  sub: string;
+  imageUrl: string;
+}
+
+/** Gambar dekoratif hero — posisi dalam persen area hero */
+export interface HeroDecoration {
+  id: string;
+  imageUrl: string;
+  x: number;
+  y: number;
+  width: number;
+  rotation: number;
+  zIndex: number;
+}
+
+/** Strip gambar di bawah CTA hero (mis. recycle / kampanye) */
+export interface HeroHighlight {
+  id: string;
+  imageUrl: string;
+  alt: string;
+}
+
 export interface LandingContent {
   nav: {
     brandName: string;
@@ -53,6 +79,9 @@ export interface LandingContent {
     titleLine2: string;
     description: string;
     ctaText: string;
+    mascots: HeroMascot[];
+    decorations: HeroDecoration[];
+    highlights: HeroHighlight[];
   };
   marquee: MarqueeItem[];
   story: {

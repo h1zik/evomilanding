@@ -15,6 +15,18 @@ export const defaultContent: LandingContent = {
     description:
       "EVOMI bukan parfum biasa. ini medium ekspresi diri buat Gen Z yang nggak takut jadi **setiap versi dari diri sendiri**. 4 karakter, 4 mood, 4 versi kamu.",
     ctaText: "amankan tempatmu",
+    mascots: [
+      { id: "scent-1", name: "Purpose", sub: "Prestige", imageUrl: "" },
+      { id: "scent-2", name: "Rebel", sub: "Brave", imageUrl: "" },
+      { id: "scent-3", name: "Peaceful", sub: "Calm", imageUrl: "" },
+      { id: "scent-4", name: "Sweet", sub: "Shy", imageUrl: "" },
+    ],
+    decorations: [],
+    highlights: [
+      { id: "hl-1", imageUrl: "", alt: "Kampanye 1" },
+      { id: "hl-2", imageUrl: "", alt: "Kampanye 2" },
+      { id: "hl-3", imageUrl: "", alt: "Kampanye 3" },
+    ],
   },
   marquee: [
     { id: "m1", text: "✦ SETIAP VERSI DARI AKU" },

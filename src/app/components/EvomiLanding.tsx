@@ -128,31 +128,48 @@ export function EvomiLanding() {
     <div className="min-h-screen w-full overflow-x-hidden bg-white text-black font-sans">
       {/* NAV */}
       <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/80">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center">
-            {nav.brandLogoUrl ? (
-              <img
-                src={nav.brandLogoUrl}
-                alt={nav.brandName}
-                className="h-12 w-auto max-w-[180px] object-contain"
-              />
-            ) : (
-              <span style={{ fontSize: 24, fontWeight: 600, color: "#1172ba" }}>{nav.brandName}</span>
-            )}
-          </div>
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-center">
+          {nav.brandLogoUrl ? (
+            <img
+              src={nav.brandLogoUrl}
+              alt={nav.brandName}
+              className="h-12 w-auto max-w-[200px] object-contain mx-auto"
+            />
+          ) : (
+            <span
+              className="text-center"
+              style={{ fontSize: 24, fontWeight: 600, color: "#1172ba" }}
+            >
+              {nav.brandName}
+            </span>
+          )}
         </div>
       </nav>
 
       {/* HERO */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden">
-        <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="absolute top-20 right-10 hidden md:block">
-          <StarBurst className="w-24 h-24" color="#FFD521" />
-        </motion.div>
-        <motion.div className="absolute bottom-32 left-10 hidden md:block" animate={{ rotate: [0, -10, 10, 0] }} transition={{ duration: 6, repeat: Infinity }}>
-          <StarBurst className="w-16 h-16" color="#E33D35" />
-        </motion.div>
+      <section className="relative min-h-[90vh] flex items-center overflow-visible">
+        <div className="absolute inset-0 pointer-events-none hidden md:block overflow-visible" aria-hidden>
+          {[...hero.decorations]
+            .sort((a, b) => a.zIndex - b.zIndex)
+            .filter((d) => d.imageUrl)
+            .map((d) => (
+              <img
+                key={d.id}
+                src={d.imageUrl}
+                alt=""
+                className="absolute h-auto max-w-none select-none"
+                style={{
+                  left: `${d.x}%`,
+                  top: `${d.y}%`,
+                  width: d.width,
+                  zIndex: d.zIndex,
+                  transform: `translate(-50%, -50%) rotate(${d.rotation}deg)`,
+                }}
+              />
+            ))}
+        </div>
 
-        <div className="relative max-w-5xl mx-auto px-6 py-20 flex flex-col items-center text-center">
+        <div className="relative z-10 max-w-5xl mx-auto px-6 py-20 flex flex-col items-center text-center w-full">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -195,20 +212,57 @@ export function EvomiLanding() {
             {renderInline(hero.description)}
           </p>
 
-          <div className="mt-10 flex flex-wrap gap-3 justify-center">
-            {scents.cards.map((s) => (
-              <span key={s.id} className="px-4 py-2 rounded-full border-2 border-black tracking-tight" style={{ backgroundColor: s.soft }}>
-                {s.emoji} {s.name} {s.sub}
-              </span>
+          <div className="mt-10 flex flex-wrap gap-6 sm:gap-8 justify-center items-end">
+            {hero.mascots.map((m) => (
+              <div key={m.id} className="flex flex-col items-center gap-2 max-w-[120px]">
+                {m.imageUrl ? (
+                  <img
+                    src={m.imageUrl}
+                    alt={`${m.name} ${m.sub}`}
+                    className="w-20 h-20 sm:w-24 sm:h-24 object-contain drop-shadow-md"
+                  />
+                ) : (
+                  <div
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 border-dashed border-black/20 flex items-center justify-center text-3xl bg-white/50"
+                    title="Upload maskot di admin"
+                  >
+                    ✨
+                  </div>
+                )}
+                <p className="tracking-tight text-center leading-tight" style={{ fontWeight: 600 }}>
+                  {m.name}
+                  <br />
+                  <span className="italic font-normal text-black/80">{m.sub}</span>
+                </p>
+              </div>
             ))}
           </div>
 
-          <div className="mt-10 flex flex-col items-center gap-5">
+          <div className="mt-10 flex flex-col items-center gap-5 w-full">
             <a href="#waitlist" className="group inline-flex items-center gap-3 bg-[#1172ba] text-white px-8 py-4 rounded-full border-2 border-black shadow-[6px_6px_0_0_#000] hover:shadow-[2px_2px_0_0_#000] hover:translate-x-1 hover:translate-y-1 transition-all">
               <span className="tracking-tight text-lg">{hero.ctaText}</span>
               <Send className="w-5 h-5 group-hover:rotate-12 transition" />
             </a>
           </div>
+
+          {hero.highlights.some((h) => h.imageUrl) && (
+            <div className="mt-12 w-full max-w-4xl grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {hero.highlights
+                .filter((h) => h.imageUrl)
+                .map((h) => (
+                  <div
+                    key={h.id}
+                    className="rounded-2xl overflow-hidden border-2 border-black shadow-[4px_4px_0_0_#000] bg-white"
+                  >
+                    <img
+                      src={h.imageUrl}
+                      alt={h.alt || "Kampanye EVOMI"}
+                      className="w-full h-auto object-cover aspect-[4/3]"
+                    />
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
       </section>
 
