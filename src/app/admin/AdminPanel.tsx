@@ -119,7 +119,7 @@ export function AdminPanel() {
     if (serverSaved) {
       toast.success("Konten tersimpan ke PostgreSQL");
     } else {
-      toast.error("Gagal simpan — pastikan database & API server aktif (npm run dev)");
+      toast.error("Gagal simpan ke server — cek DATABASE_URL & log deploy (GET /api/health)");
     }
   }
 

@@ -5,15 +5,14 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { initDatabase, pool } from "./db.js";
+import { ensureUploadsDir, resolveUploadsDir } from "./uploadPaths.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
-const uploadsDir = path.join(rootDir, "public", "uploads");
+const uploadsDir = resolveUploadsDir(rootDir);
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+ensureUploadsDir(uploadsDir);
 
 const app = express();
 app.use(cors());
@@ -155,6 +154,19 @@ app.delete("/api/waitlist/:id", async (req, res) => {
   }
 });
 
+function attachFrontend() {
+  const distDir = path.join(rootDir, "dist");
+  if (!fs.existsSync(distDir)) {
+    console.warn("[api] dist/ tidak ditemukan — hanya mode API (gunakan npm run dev:web untuk frontend)");
+    return;
+  }
+  app.use(express.static(distDir, { index: false }));
+  app.get(/^(?!\/api\/|\/uploads\/).*/, (_req, res) => {
+    res.sendFile(path.join(distDir, "index.html"));
+  });
+  console.log("[api] Serving frontend from dist/");
+}
+
 app.post("/api/upload", async (req, res) => {
   try {
     const { filename, mimeType, data, prefix } = req.body as {
@@ -183,6 +195,7 @@ app.post("/api/upload", async (req, res) => {
     fs.writeFileSync(filePath, buffer);
     res.json({ url: `/uploads/${safeName}` });
   } catch (err) {
+    console.error("[api] Upload error:", err);
     res.status(400).json({ error: "Upload gagal" });
   }
 });
@@ -191,13 +204,15 @@ const port = Number(process.env.PORT) || 3001;
 
 async function start() {
   if (!process.env.DATABASE_URL) {
-    console.error("[api] DATABASE_URL belum di-set di file .env");
+    console.error("[api] DATABASE_URL belum di-set");
     process.exit(1);
   }
   await initDatabase();
-  app.listen(port, () => {
+  attachFrontend();
+  app.listen(port, "0.0.0.0", () => {
     console.log(`[api] Server running at http://localhost:${port}`);
     console.log(`[api] PostgreSQL connected`);
+    console.log(`[api] Uploads directory: ${uploadsDir}`);
   });
 }
 
