@@ -393,9 +393,9 @@ export function EvomiLanding() {
 
       {/* STORY */}
       <section id="story" className="relative overflow-visible pt-10 pb-24 px-6" style={{ backgroundColor: "#1172ba" }}>
-        <div className="max-w-6xl mx-auto text-white overflow-visible flex flex-col items-center gap-0">
+        <div className="max-w-6xl mx-auto text-white overflow-visible flex flex-col items-center gap-8 md:gap-10">
             <h2
-              className="leading-[0.95] tracking-tight text-center max-w-4xl mx-auto m-0"
+              className="leading-[0.95] tracking-tight text-center max-w-4xl mx-auto"
               style={{ fontSize: "clamp(32px, 5vw, 56px)", fontWeight: 600 }}
             >
               {story.titlePart1}
@@ -412,7 +412,7 @@ export function EvomiLanding() {
           {(() => {
             if (story.sideImageUrl) {
               return (
-                <div className="flex justify-center w-full px-2 -mt-6 md:-mt-10 lg:-mt-12 leading-[0]">
+                <div className="flex justify-center w-full px-2">
                   <img
                     src={story.sideImageUrl}
                     alt="Produk EVOMI"
@@ -425,7 +425,7 @@ export function EvomiLanding() {
             const scentProducts = scents.cards.filter((s) => s.imageUrl);
             if (scentProducts.length > 0) {
               return (
-                <div className="flex flex-wrap justify-center items-end gap-3 sm:gap-5 md:gap-8 w-full px-2 -mt-6 md:-mt-10 lg:-mt-12">
+                <div className="flex flex-wrap justify-center items-end gap-3 sm:gap-5 md:gap-8 w-full px-2">
                   {scentProducts.map((s, i) => (
                     <motion.img
                       key={s.id}
@@ -445,7 +445,7 @@ export function EvomiLanding() {
             return null;
           })()}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 w-full -mt-6 md:-mt-10 lg:-mt-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 w-full">
             {story.cards.map((c, i) => {
               const Icon = STORY_ICONS[c.icon] ?? Heart;
               const titleColor = c.titleColor || "#1172ba";
