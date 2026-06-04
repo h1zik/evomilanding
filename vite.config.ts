@@ -36,6 +36,10 @@ export default defineConfig({
         target: 'http://localhost:3001',
         changeOrigin: true,
       },
+      '/official': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
     },
   },
   assetsInclude: ['**/*.svg', '**/*.csv'],
