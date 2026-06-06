@@ -111,7 +111,7 @@ app.post("/api/waitlist", async (req, res) => {
            scent = EXCLUDED.scent
        RETURNING id, name, whatsapp, scent,
                  submitted_at AS "submittedAt"`,
-      [id, name, whatsapp, scent, submittedAt ?? null],
+      [id, name, whatsapp, (scent ?? "").trim(), submittedAt ?? null],
     );
     res.json(rows[0]);
   } catch (err) {

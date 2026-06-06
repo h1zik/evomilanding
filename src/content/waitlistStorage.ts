@@ -48,7 +48,7 @@ export async function addSubmission(data: NewWaitlistSubmission): Promise<Waitli
     id: createId(),
     name: data.name.trim(),
     whatsapp: data.whatsapp.replace(/\D/g, ""),
-    scent: data.scent,
+    scent: (data.scent ?? "").trim(),
     submittedAt: new Date().toISOString(),
   };
 

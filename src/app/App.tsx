@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router";
 import { Toaster } from "sonner";
 import { ContentProvider } from "../content/ContentContext";
+import { SiteHead } from "./components/SiteHead";
 import { EvomiLanding } from "./components/EvomiLanding";
 import { AdminLogin } from "./admin/AdminLogin";
 import { AdminPanel } from "./admin/AdminPanel";
@@ -8,6 +9,7 @@ import { AdminPanel } from "./admin/AdminPanel";
 export default function App() {
   return (
     <ContentProvider>
+      <SiteHead />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<EvomiLanding />} />

@@ -105,6 +105,12 @@ export interface LandingContent {
     brandName: string;
     brandLogoUrl: string;
   };
+  site: {
+    /** Judul tab browser */
+    pageTitle: string;
+    /** URL favicon (upload PNG/SVG/ICO) */
+    faviconUrl: string;
+  };
   hero: {
     counterLabel: string;
     counterSuffix: string;
@@ -167,12 +173,15 @@ export interface LandingContent {
       namePlaceholder: string;
       whatsappLabel: string;
       whatsappPlaceholder: string;
-      vibeLabel: string;
+      /** @deprecated Form waitlist tidak lagi menampilkan pilihan aroma */
+      vibeLabel?: string;
       submitText: string;
       disclaimer: string;
       successTitle: string;
       successMessage: string;
       referText: string;
+      /** Teks yang dibagikan ke WhatsApp, X, Telegram, dll. */
+      shareMessage: string;
     };
     errors: {
       whatsapp: string;
@@ -188,6 +197,7 @@ export interface LandingContent {
   };
   footer: {
     brandName: string;
+    brandLogoUrl: string;
     tagline: string;
     socialTitle: string;
     socialLinks: SocialLink[];

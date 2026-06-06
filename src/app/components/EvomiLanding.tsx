@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { Sparkles, Heart, Flame, Leaf, Send, CheckCircle2, Star } from "lucide-react";
+import { Sparkles, Heart, Flame, Leaf, Send, CheckCircle2, Star, Copy } from "lucide-react";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { useContent } from "@/content/ContentContext";
@@ -67,7 +67,7 @@ function HeroMascotCard({ mascot, hover = false }: { mascot: HeroMascot; hover?:
       )}
       <p className="tracking-tight text-center leading-tight font-semibold mt-2">
         <span style={{ color: mascot.nameColor }}>{mascot.name}</span>
-        {" "}
+        <br />
         <span style={{ color: mascot.subColor }}>{mascot.sub}</span>
       </p>
     </>
@@ -292,19 +292,140 @@ function CounterAvatarStack({ avatars }: { avatars: CounterAvatar[] }) {
   );
 }
 
+function ShareIconWhatsApp({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden fill="currentColor">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+    </svg>
+  );
+}
+
+function ShareIconInstagram({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden fill="currentColor">
+      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+    </svg>
+  );
+}
+
+function ShareIconX({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden fill="currentColor">
+      <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932 6.064-6.933zm-1.291 19.497h2.039L6.486 3.24H4.298l13.312 17.41z" />
+    </svg>
+  );
+}
+
+function ShareIconTelegram({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden fill="currentColor">
+      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+    </svg>
+  );
+}
+
+function WaitlistShareBar({ heading, message }: { heading: string; message: string }) {
+  const shareUrl =
+    typeof window !== "undefined" ? window.location.href.split("#")[0] : "https://evomi.id";
+  const shareText = `${message.trim()} ${shareUrl}`.trim();
+
+  function openShare(url: string) {
+    window.open(url, "_blank", "noopener,noreferrer,width=600,height=520");
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Link disalin!");
+    } catch {
+      toast.error("Gagal menyalin link");
+    }
+  }
+
+  async function copyShareText() {
+    try {
+      await navigator.clipboard.writeText(shareText);
+      toast.success("Teks & link disalin — tempel di Instagram Story atau bio");
+    } catch {
+      toast.error("Gagal menyalin");
+    }
+  }
+
+  const btnClass =
+    "inline-flex size-11 items-center justify-center rounded-full border-2 border-black shadow-[3px_3px_0_0_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0_0_#000] transition-all";
+
+  return (
+    <div className="mt-8 pt-6 border-t border-black/10">
+      <p className="text-sm font-semibold text-black/80 mb-4">{heading}</p>
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        <button
+          type="button"
+          className={btnClass}
+          style={{ backgroundColor: "#25D366", color: "#fff" }}
+          aria-label="Bagikan ke WhatsApp"
+          onClick={() =>
+            openShare(`https://wa.me/?text=${encodeURIComponent(shareText)}`)
+          }
+        >
+          <ShareIconWhatsApp className="size-5" />
+        </button>
+        <button
+          type="button"
+          className={btnClass}
+          style={{
+            background: "linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)",
+            color: "#fff",
+          }}
+          aria-label="Bagikan ke Instagram"
+          onClick={() => void copyShareText()}
+        >
+          <ShareIconInstagram className="size-5" />
+        </button>
+        <button
+          type="button"
+          className={btnClass}
+          style={{ backgroundColor: "#000", color: "#fff" }}
+          aria-label="Bagikan ke X"
+          onClick={() =>
+            openShare(
+              `https://twitter.com/intent/tweet?text=${encodeURIComponent(message.trim())}&url=${encodeURIComponent(shareUrl)}`,
+            )
+          }
+        >
+          <ShareIconX className="size-4" />
+        </button>
+        <button
+          type="button"
+          className={btnClass}
+          style={{ backgroundColor: "#0088cc", color: "#fff" }}
+          aria-label="Bagikan ke Telegram"
+          onClick={() =>
+            openShare(
+              `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(message.trim())}`,
+            )
+          }
+        >
+          <ShareIconTelegram className="size-5" />
+        </button>
+        <button
+          type="button"
+          className={`${btnClass} bg-white text-black`}
+          aria-label="Salin link"
+          onClick={() => void copyLink()}
+        >
+          <Copy className="size-5 shrink-0" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function EvomiLanding() {
   const { content, loading } = useContent();
   const [count, setCount] = useState(0);
   const [whatsapp, setWhatsapp] = useState("");
   const [name, setName] = useState("");
-  const [scent, setScent] = useState(content.scents.cards[0]?.name ?? "");
   const [submitted, setSubmitted] = useState(false);
-
-  useEffect(() => {
-    if (content.scents.cards[0]) {
-      setScent(content.scents.cards[0].name);
-    }
-  }, [content.scents.cards]);
 
   useEffect(() => {
     let cancelled = false;
@@ -336,7 +457,6 @@ export function EvomiLanding() {
     await addSubmission({
       name: name.trim(),
       whatsapp: digits,
-      scent,
     });
     const total = await fetchWaitlistCount();
     setCount(total);
@@ -783,10 +903,6 @@ export function EvomiLanding() {
                   </div>
                 </label>
 
-                <div>
-                  <span className="block text-sm tracking-tight mb-2">{waitlist.form.vibeLabel}</span>
-                </div>
-
                 <button
                   type="submit"
                   className="w-full bg-[#1172ba] text-white px-6 py-4 rounded-xl border-2 border-black hover:translate-x-1 hover:translate-y-1 transition-all flex items-center justify-center gap-2"
@@ -813,13 +929,26 @@ export function EvomiLanding() {
                   {fillTemplate(waitlist.form.successTitle, { name: name.split(" ")[0] })}
                 </h3>
                 <p className="mt-2 text-black/70">
-                  {renderInline(fillTemplate(waitlist.form.successMessage, { scent, count: count.toLocaleString("id-ID") }))}
+                  {renderInline(
+                    fillTemplate(waitlist.form.successMessage, {
+                      count: count.toLocaleString("id-ID"),
+                    }),
+                  )}
                 </p>
+                <WaitlistShareBar
+                  heading={waitlist.form.referText}
+                  message={waitlist.form.shareMessage}
+                />
                 <button
-                  onClick={() => { setSubmitted(false); setName(""); setWhatsapp(""); }}
-                  className="mt-6 underline tracking-tight"
+                  type="button"
+                  onClick={() => {
+                    setSubmitted(false);
+                    setName("");
+                    setWhatsapp("");
+                  }}
+                  className="mt-6 text-sm text-black/50 underline tracking-tight hover:text-black/70"
                 >
-                  {waitlist.form.referText}
+                  Daftar nomor lain
                 </button>
               </div>
             )}
@@ -865,8 +994,18 @@ export function EvomiLanding() {
         <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-10">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <BrandMark logoUrl={nav.brandLogoUrl} name={footer.brandName} size={36} />
-              <span style={{ fontSize: 28, fontWeight: 600 }}>{footer.brandName}</span>
+              {footer.brandLogoUrl?.trim() ? (
+                <img
+                  src={footer.brandLogoUrl}
+                  alt={footer.brandName}
+                  className="h-16 w-auto max-w-[240px] object-contain"
+                />
+              ) : (
+                <>
+                  <BrandMark logoUrl={undefined} name={footer.brandName} size={36} />
+                  <span style={{ fontSize: 28, fontWeight: 600 }}>{footer.brandName}</span>
+                </>
+              )}
             </div>
             <p className="text-white/60 max-w-xs">{footer.tagline}</p>
           </div>

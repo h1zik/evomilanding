@@ -5,18 +5,24 @@ export function BrandLogoUpload({
   logoUrl,
   brandName,
   onChange,
+  label = "Logo brand",
+  hint,
+  uploadPrefix = "brand",
 }: {
   logoUrl: string;
   brandName: string;
   onChange: (url: string) => void;
+  label?: string;
+  hint?: string;
+  uploadPrefix?: string;
 }) {
   return (
     <ImageUploadField
-      label="Logo brand"
-      hint={`Header: logo saja (tanpa teks). Footer: logo + teks. Maks. ${MAX_UPLOAD_MB} MB.`}
+      label={label}
+      hint={hint ?? `PNG/SVG transparan disarankan. Maks. ${MAX_UPLOAD_MB} MB.`}
       imageUrl={logoUrl}
       alt={brandName}
-      uploadPrefix="brand"
+      uploadPrefix={uploadPrefix}
       onChange={onChange}
       previewClassName="w-20 h-20 rounded-2xl"
       emptyPlaceholder={
