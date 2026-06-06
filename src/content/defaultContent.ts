@@ -5,6 +5,10 @@ export const defaultContent: LandingContent = {
     brandName: "evomi.id",
     brandLogoUrl: "",
   },
+  site: {
+    pageTitle: "evomi.id — Join the Waitlist",
+    faviconUrl: "",
+  },
   hero: {
     counterLabel: "LIVE",
     counterSuffix: "Orang sudah masuk waitlist",
@@ -176,12 +180,13 @@ export const defaultContent: LandingContent = {
       namePlaceholder: "contoh: Naya",
       whatsappLabel: "nomor whatsapp",
       whatsappPlaceholder: "812 3456 7890",
-      vibeLabel: "vibe kamu sekarang",
       submitText: "daftarkan aku",
       disclaimer: "dengan gabung, kamu setuju menerima update via WA dari EVOMI. bisa berhenti kapan aja.",
       successTitle: "kamu masuk, {name}! ✨",
-      successMessage: "kita kabarin via WA pas **{scent}** rilis. kamu antrian ke #{count}.",
-      referText: "daftarkan teman juga →",
+      successMessage: "kita kabarin via WA pas EVOMI rilis. kamu antrian ke #{count}.",
+      referText: "Daftarkan temanmu juga",
+      shareMessage:
+        "Aku udah join waitlist EVOMI! Gabung juga yuk — dapet diskon early bird 🌸",
     },
     errors: {
       whatsapp: "nomor WA-nya kurang lengkap nih bestie 📱",
@@ -216,6 +221,7 @@ export const defaultContent: LandingContent = {
   },
   footer: {
     brandName: "evomi.id",
+    brandLogoUrl: "",
     tagline: "setiap versi dari aku. parfum buat generasi yang nolak jadi satu wajah aja.",
     socialTitle: "TERHUBUNG",
     socialLinks: [

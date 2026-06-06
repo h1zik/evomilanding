@@ -1,6 +1,7 @@
 import type { CounterAvatarIconType, LandingContent, ScentCard, StoryIcon, TestimonialCard } from "@/content/types";
 import { RichTextEditor } from "./components/RichTextEditor";
 import { createId } from "@/content/storage";
+import { defaultContent } from "@/content/defaultContent";
 import { Button } from "../components/ui/button";
 import { Plus } from "lucide-react";
 import {
@@ -33,6 +34,8 @@ export function HeroSection({ draft, patch, patchImage }: EditorProps) {
       <div className="space-y-5">
         <FieldGroup title="Navigasi & brand">
           <BrandLogoUpload
+            label="Logo header"
+            hint="Logo di navigasi atas (tanpa teks di sampingnya di header)."
             logoUrl={draft.nav.brandLogoUrl ?? ""}
             brandName={draft.nav.brandName}
             onChange={(url) => patchImage((c) => ({ ...c, nav: { ...c.nav, brandLogoUrl: url } }))}
@@ -43,6 +46,33 @@ export function HeroSection({ draft, patch, patchImage }: EditorProps) {
             onChange={(v) => patch((c) => ({ ...c, nav: { ...c.nav, brandName: v } }))}
             singleLine
             allowBold={false}
+          />
+        </FieldGroup>
+        <FieldGroup title="Tab browser & favicon">
+          <Field
+            label="Judul tab browser"
+            value={draft.site?.pageTitle ?? ""}
+            onChange={(v) =>
+              patch((c) => ({
+                ...c,
+                site: { ...defaultContent.site, ...c.site, pageTitle: v },
+              }))
+            }
+            hint="Teks di tab browser, mis. evomi.id — Join the Waitlist"
+          />
+          <ImageUploadField
+            label="Favicon"
+            hint="PNG, SVG, atau ICO — disarankan 32×32 px atau 64×64 px"
+            imageUrl={draft.site?.faviconUrl ?? ""}
+            alt="Favicon"
+            uploadPrefix="favicon"
+            onChange={(url) =>
+              patchImage((c) => ({
+                ...c,
+                site: { ...defaultContent.site, ...c.site, faviconUrl: url },
+              }))
+            }
+            previewClassName="w-12 h-12 rounded-lg object-contain bg-white border border-black/10"
           />
         </FieldGroup>
         <FieldGroup title="Live counter">
@@ -639,7 +669,6 @@ export function WaitlistFormSection({ draft, patch }: EditorProps) {
           <Field label="Placeholder nama" value={draft.waitlist.form.namePlaceholder} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, form: { ...c.waitlist.form, namePlaceholder: v } } }))} />
           <Field label="Label WhatsApp" value={draft.waitlist.form.whatsappLabel} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, form: { ...c.waitlist.form, whatsappLabel: v } } }))} />
           <Field label="Placeholder WhatsApp" value={draft.waitlist.form.whatsappPlaceholder} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, form: { ...c.waitlist.form, whatsappPlaceholder: v } } }))} />
-          <Field label="Label vibe" value={draft.waitlist.form.vibeLabel} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, form: { ...c.waitlist.form, vibeLabel: v } } }))} />
           <Field label="Tombol submit" value={draft.waitlist.form.submitText} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, form: { ...c.waitlist.form, submitText: v } } }))} />
         </div>
         <Field label="Disclaimer bawah form" value={draft.waitlist.form.disclaimer} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, form: { ...c.waitlist.form, disclaimer: v } } }))} multiline />
@@ -647,8 +676,9 @@ export function WaitlistFormSection({ draft, patch }: EditorProps) {
 
       <FieldGroup title="Setelah submit berhasil">
         <Field label="Judul sukses" value={draft.waitlist.form.successTitle} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, form: { ...c.waitlist.form, successTitle: v } } }))} hint="{name} = nama depan pendaftar" />
-        <Field label="Pesan sukses" value={draft.waitlist.form.successMessage} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, form: { ...c.waitlist.form, successMessage: v } } }))} multiline hint="{scent}, {count}, **bold**" />
-        <Field label="Teks ajakan refer teman" value={draft.waitlist.form.referText} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, form: { ...c.waitlist.form, referText: v } } }))} />
+        <Field label="Pesan sukses" value={draft.waitlist.form.successMessage} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, form: { ...c.waitlist.form, successMessage: v } } }))} multiline hint="{count}, **bold**" />
+        <Field label="Teks ajakan refer teman" value={draft.waitlist.form.referText} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, form: { ...c.waitlist.form, referText: v } } }))} hint="Judul di atas tombol share" />
+        <Field label="Pesan share" value={draft.waitlist.form.shareMessage ?? ""} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, form: { ...c.waitlist.form, shareMessage: v } } }))} multiline hint="Teks yang dibagikan ke WhatsApp, X, Telegram, dll." />
       </FieldGroup>
 
       <FieldGroup title="Pesan validasi & notifikasi">
@@ -691,11 +721,19 @@ export function TestimonialsSection({ draft, patch }: EditorProps) {
   );
 }
 
-export function FooterSection({ draft, patch }: EditorProps) {
+export function FooterSection({ draft, patch, patchImage }: EditorProps) {
   return (
     <div>
       <SectionHeader title="Footer" description="Informasi brand, link sosial, dan teks legal di bagian bawah halaman." />
       <FieldGroup title="Brand">
+        <BrandLogoUpload
+          label="Logo footer"
+          logoUrl={draft.footer.brandLogoUrl ?? ""}
+          brandName={draft.footer.brandName}
+          uploadPrefix="footer-brand"
+          hint="Logo di footer (bisa berbeda dari logo header). Kosongkan untuk placeholder gradient."
+          onChange={(url) => patchImage((c) => ({ ...c, footer: { ...c.footer, brandLogoUrl: url } }))}
+        />
         <Field label="Nama brand" value={draft.footer.brandName} onChange={(v) => patch((c) => ({ ...c, footer: { ...c.footer, brandName: v } }))} />
         <Field label="Tagline" value={draft.footer.tagline} onChange={(v) => patch((c) => ({ ...c, footer: { ...c.footer, tagline: v } }))} multiline />
       </FieldGroup>

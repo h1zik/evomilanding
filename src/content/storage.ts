@@ -151,6 +151,17 @@ function normalizeContent(content: LandingContent): LandingContent {
       brandLogoUrl: content.nav?.brandLogoUrl ?? "",
       brandName: content.nav?.brandName ?? defaultContent.nav.brandName,
     },
+    site: {
+      ...defaultContent.site,
+      ...(content.site ?? {}),
+      pageTitle: content.site?.pageTitle ?? defaultContent.site.pageTitle,
+      faviconUrl: content.site?.faviconUrl ?? "",
+    },
+    footer: {
+      ...defaultContent.footer,
+      ...(content.footer ?? {}),
+      brandLogoUrl: content.footer?.brandLogoUrl ?? "",
+    },
     story: {
       ...story,
       sideImageUrl: story.sideImageUrl ?? "",
@@ -187,6 +198,12 @@ function normalizeContent(content: LandingContent): LandingContent {
       titleColor: waitlist.titleColor ?? defaultContent.waitlist.titleColor,
       discountPercentColor:
         waitlist.discountPercentColor ?? defaultContent.waitlist.discountPercentColor,
+      form: {
+        ...defaultContent.waitlist.form,
+        ...waitlist.form,
+        shareMessage:
+          waitlist.form?.shareMessage ?? defaultContent.waitlist.form.shareMessage,
+      },
     },
     hero: {
       ...hero,

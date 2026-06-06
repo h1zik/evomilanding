@@ -53,9 +53,18 @@ export function WaitlistLeads() {
       (l) =>
         l.name.toLowerCase().includes(q) ||
         l.whatsapp.includes(q) ||
-        l.scent.toLowerCase().includes(q),
+        (l.scent?.trim() && l.scent.toLowerCase().includes(q)),
     );
   }, [leads, query]);
+
+  const showScentColumn = leads.some((l) => l.scent?.trim());
+
+  const weekCount = leads.filter((l) => {
+    const d = new Date(l.submittedAt);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return d >= weekAgo;
+  }).length;
 
   async function handleDelete(id: string, name: string) {
     if (!confirm(`Hapus pendaftar "${name}" dari daftar?`)) return;
@@ -81,18 +90,9 @@ export function WaitlistLeads() {
         <StatCard label="Total pendaftar" value={leads.length} accent="#1172ba" />
         <StatCard label="Daftar hari ini" value={todayCount} accent="#5EA14A" />
         <StatCard
-          label="Aroma populer"
-          value={
-            leads.length
-              ? Object.entries(
-                  leads.reduce<Record<string, number>>((acc, l) => {
-                    acc[l.scent] = (acc[l.scent] ?? 0) + 1;
-                    return acc;
-                  }, {}),
-                ).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—"
-              : "—"
-          }
-          hint={leads.length ? "Berdasarkan pilihan vibe" : "Belum ada data"}
+          label="7 hari terakhir"
+          value={weekCount}
+          hint="Pendaftar minggu ini"
           accent="#DD74A5"
         />
       </div>
@@ -104,7 +104,7 @@ export function WaitlistLeads() {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Cari nama, WhatsApp, atau aroma..."
+              placeholder="Cari nama atau WhatsApp..."
               className="pl-9 bg-white"
             />
           </div>
@@ -148,7 +148,7 @@ export function WaitlistLeads() {
                 <TableHead className="w-12">No</TableHead>
                 <TableHead>Nama</TableHead>
                 <TableHead>WhatsApp</TableHead>
-                <TableHead>Aroma</TableHead>
+                {showScentColumn ? <TableHead>Aroma</TableHead> : null}
                 <TableHead>Waktu daftar</TableHead>
                 <TableHead className="w-16 text-right">Aksi</TableHead>
               </TableRow>
@@ -168,11 +168,17 @@ export function WaitlistLeads() {
                       +62 {lead.whatsapp}
                     </a>
                   </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="font-normal">
-                      {lead.scent}
-                    </Badge>
-                  </TableCell>
+                  {showScentColumn ? (
+                    <TableCell>
+                      {lead.scent?.trim() ? (
+                        <Badge variant="secondary" className="font-normal">
+                          {lead.scent}
+                        </Badge>
+                      ) : (
+                        <span className="text-black/35">—</span>
+                      )}
+                    </TableCell>
+                  ) : null}
                   <TableCell className="text-black/55 text-sm whitespace-nowrap">
                     {formatDate(lead.submittedAt)}
                   </TableCell>
