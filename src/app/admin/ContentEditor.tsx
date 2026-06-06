@@ -1,4 +1,4 @@
-import type { LandingContent, ScentCard, StoryIcon, TestimonialCard } from "@/content/types";
+import type { CounterAvatarIconType, LandingContent, ScentCard, StoryIcon, TestimonialCard } from "@/content/types";
 import { RichTextEditor } from "./components/RichTextEditor";
 import { createId } from "@/content/storage";
 import { Button } from "../components/ui/button";
@@ -53,17 +53,145 @@ export function HeroSection({ draft, patch, patchImage }: EditorProps) {
             <Field label="Label badge" value={draft.hero.counterLabel} onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, counterLabel: v } }))} />
             <Field label="Teks di bawah angka" value={draft.hero.counterSuffix} onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, counterSuffix: v } }))} />
           </div>
+          <div className="pt-2 border-t border-black/8 space-y-4">
+            <p className="text-sm text-black/55">
+              Ikon overlap di kiri angka counter. Pilih preset atau upload gambar kustom per lingkaran.
+            </p>
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={draft.hero.counterAvatars.length >= 6}
+                onClick={() =>
+                  patch((c) => ({
+                    ...c,
+                    hero: {
+                      ...c.hero,
+                      counterAvatars: [
+                        ...c.hero.counterAvatars,
+                        {
+                          id: createId("counter"),
+                          icon: "star" as CounterAvatarIconType,
+                          bgColor: "#1172ba",
+                          iconColor: "#60BBFF",
+                          imageUrl: "",
+                        },
+                      ],
+                    },
+                  }))
+                }
+              >
+                <Plus className="size-4" /> Tambah ikon
+              </Button>
+            </div>
+            <div className="space-y-4">
+              {draft.hero.counterAvatars.map((avatar, i) => (
+                <CardShell
+                  key={avatar.id}
+                  title={`Ikon ${i + 1}`}
+                  subtitle={avatar.imageUrl ? "Gambar kustom" : avatar.icon}
+                  onDelete={
+                    draft.hero.counterAvatars.length > 1
+                      ? () =>
+                          patch((c) => ({
+                            ...c,
+                            hero: {
+                              ...c.hero,
+                              counterAvatars: c.hero.counterAvatars.filter((x) => x.id !== avatar.id),
+                            },
+                          }))
+                      : undefined
+                  }
+                >
+                  <Field
+                    label="Ikon preset"
+                    value={avatar.icon}
+                    onChange={(v) =>
+                      patch((c) => ({
+                        ...c,
+                        hero: {
+                          ...c.hero,
+                          counterAvatars: c.hero.counterAvatars.map((x) =>
+                            x.id === avatar.id ? { ...x, icon: v as CounterAvatarIconType } : x,
+                          ),
+                        },
+                      }))
+                    }
+                    hint="star · dot · heart · sparkles · leaf · flame"
+                  />
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <ColorField
+                      label="Warna lingkaran"
+                      value={avatar.bgColor}
+                      onChange={(v) =>
+                        patch((c) => ({
+                          ...c,
+                          hero: {
+                            ...c.hero,
+                            counterAvatars: c.hero.counterAvatars.map((x) =>
+                              x.id === avatar.id ? { ...x, bgColor: v } : x,
+                            ),
+                          },
+                        }))
+                      }
+                    />
+                    <ColorField
+                      label="Warna ikon"
+                      value={avatar.iconColor}
+                      onChange={(v) =>
+                        patch((c) => ({
+                          ...c,
+                          hero: {
+                            ...c.hero,
+                            counterAvatars: c.hero.counterAvatars.map((x) =>
+                              x.id === avatar.id ? { ...x, iconColor: v } : x,
+                            ),
+                          },
+                        }))
+                      }
+                    />
+                  </div>
+                  <ImageUploadField
+                    label="Gambar kustom (opsional — menggantikan preset)"
+                    imageUrl={avatar.imageUrl}
+                    alt={`Ikon counter ${i + 1}`}
+                    uploadPrefix="counter-icon"
+                    onChange={(url) =>
+                      patchImage((c) => ({
+                        ...c,
+                        hero: {
+                          ...c.hero,
+                          counterAvatars: c.hero.counterAvatars.map((x) =>
+                            x.id === avatar.id ? { ...x, imageUrl: url } : x,
+                          ),
+                        },
+                      }))
+                    }
+                  />
+                </CardShell>
+              ))}
+            </div>
+          </div>
         </FieldGroup>
         <FieldGroup title="Judul & deskripsi">
           <RichTextEditor
             label="Judul utama"
             value={draft.hero.title ?? ""}
             onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, title: v } }))}
-            note="Kata berwarna pertama di judul mendapat garis kuning di landing page. Gunakan «Tambah baris baru» untuk baris berikutnya."
-            previewOptions={{ squiggleFirstColor: true, squiggleColor: "#FFD521" }}
+            note="Headline besar di hero, contoh: Join the waiting list."
           />
           <RichTextEditor
-            label="Deskripsi"
+            label="Subjudul baris 1"
+            value={draft.hero.subtitleLine1 ?? ""}
+            onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, subtitleLine1: v } }))}
+          />
+          <RichTextEditor
+            label="Subjudul baris 2"
+            value={draft.hero.subtitleLine2 ?? ""}
+            onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, subtitleLine2: v } }))}
+          />
+          <RichTextEditor
+            label="Paragraf deskripsi"
             value={draft.hero.description}
             onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, description: v } }))}
             allowBold
@@ -402,11 +530,15 @@ export function ScentsSection({ draft, patch, patchImage }: EditorProps) {
     <div>
       <SectionHeader title="Koleksi Aroma" description="Grid card produk parfum — upload gambar produk atau pakai emoji sebagai fallback." />
       <FieldGroup title="Judul section">
-        <div className="grid sm:grid-cols-3 gap-4">
-          <Field label="Sebelum highlight" value={draft.scents.titleBefore} onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, titleBefore: v } }))} />
-          <Field label="Highlight (biru)" value={draft.scents.titleHighlight} onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, titleHighlight: v } }))} />
-          <Field label="Setelah highlight" value={draft.scents.titleAfter} onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, titleAfter: v } }))} />
-        </div>
+        <RichTextEditor
+          label="Judul utama"
+          value={draft.scents.title ?? ""}
+          onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, title: v } }))}
+          allowInlineImages
+          uploadPrefix="scent-title"
+          note="Gunakan «Tambah baris baru» untuk pindah baris. «Tambah gambar» atau «Tambah ikon hati» untuk elemen di sela teks."
+          previewOptions={{ inlineImageHeight: "0.85em" }}
+        />
         <Field label="Deskripsi" value={draft.scents.description} onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, description: v } }))} multiline />
       </FieldGroup>
 
@@ -480,6 +612,20 @@ export function WaitlistFormSection({ draft, patch }: EditorProps) {
       <FieldGroup title="Promosi waitlist">
         <Field label="Badge atas" value={draft.waitlist.badge} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, badge: v } }))} />
         <Field label="Judul (sebelum angka diskon)" value={draft.waitlist.titleBefore} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, titleBefore: v } }))} />
+        <div className="grid sm:grid-cols-2 gap-4">
+          <ColorField
+            label="Warna teks judul"
+            value={draft.waitlist.titleColor ?? "#FFFFFF"}
+            onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, titleColor: v } }))}
+            hint="Teks utama di kiri section waitlist"
+          />
+          <ColorField
+            label="Warna angka diskon"
+            value={draft.waitlist.discountPercentColor ?? "#FFD521"}
+            onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, discountPercentColor: v } }))}
+            hint="Mis. 20% — default kuning (#FFD521)"
+          />
+        </div>
         <Field label="Angka diskon" value={draft.waitlist.discountPercent} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, discountPercent: v } }))} />
         <Field label="Deskripsi" value={draft.waitlist.description} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, description: v } }))} multiline hint="**bold** didukung" />
         <Field label="Label counter live" value={draft.waitlist.counterLabel} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, counterLabel: v } }))} />

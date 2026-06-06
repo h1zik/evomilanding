@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bold, Eye, Palette, Plus, Trash2 } from "lucide-react";
+import { Bold, Eye, Heart, ImagePlus, Palette, Plus, Trash2 } from "lucide-react";
 import { renderRichText, type RichTextOptions } from "@/content/renderInline";
 import {
   emptyLine,
@@ -14,6 +14,7 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { cn } from "../../components/ui/utils";
+import { ImageUploadField } from "./ImageUploadField";
 
 type RichTextEditorProps = {
   label: string;
@@ -26,6 +27,9 @@ type RichTextEditorProps = {
   /** Catatan khusus (mis. garis kuning di kata berwarna pertama) */
   note?: string;
   previewOptions?: RichTextOptions;
+  /** Izinkan gambar/ikon inline di antara teks */
+  allowInlineImages?: boolean;
+  uploadPrefix?: string;
 };
 
 function normalizeColor(hex: string): string {
@@ -41,6 +45,8 @@ export function RichTextEditor({
   allowBold = true,
   note,
   previewOptions,
+  allowInlineImages = false,
+  uploadPrefix = "inline",
 }: RichTextEditorProps) {
   const lastEmittedRef = useRef(value);
   const [lines, setLines] = useState(() => parseRichTextToLines(value));
@@ -119,6 +125,47 @@ export function RichTextEditor({
     });
   };
 
+  const addImageSegment = (lineId: string) => {
+    commit((prev) =>
+      prev.map((line) =>
+        line.id !== lineId
+          ? line
+          : {
+              ...line,
+              segments: [
+                ...line.segments,
+                { id: newSegmentId(), kind: "image" as const, text: "", imageUrl: "" },
+              ],
+            },
+      ),
+    );
+  };
+
+  const addHeartIconSegment = (lineId: string) => {
+    commit((prev) =>
+      prev.map((line) =>
+        line.id !== lineId
+          ? line
+          : {
+              ...line,
+              segments: [
+                ...line.segments,
+                {
+                  id: newSegmentId(),
+                  kind: "icon" as const,
+                  icon: "heart" as const,
+                  iconColor: "#DD74A5",
+                  text: "",
+                },
+              ],
+            },
+      ),
+    );
+  };
+
+  const isImageSegment = (seg: TextSegment) => seg.kind === "image";
+  const isIconSegment = (seg: TextSegment) => seg.kind === "icon";
+
   const previewText = linesToRichText(lines);
 
   return (
@@ -172,15 +219,27 @@ export function RichTextEditor({
                 key={seg.id}
                 className={cn(
                   "rounded-lg border p-3 space-y-2",
-                  seg.color ? "border-[#1172ba]/25 bg-[#1172ba]/[0.03]" : "border-black/8 bg-[#fafafa]",
+                  isImageSegment(seg)
+                    ? "border-[#DD74A5]/30 bg-[#DD74A5]/[0.04]"
+                    : isIconSegment(seg)
+                      ? "border-[#DD74A5]/30 bg-[#DD74A5]/[0.04]"
+                      : seg.color
+                        ? "border-[#1172ba]/25 bg-[#1172ba]/[0.03]"
+                        : "border-black/8 bg-[#fafafa]",
                 )}
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs text-black/45">
-                    {seg.color ? "Teks berwarna" : "Teks biasa"}
+                    {isImageSegment(seg)
+                      ? "Gambar inline"
+                      : isIconSegment(seg)
+                        ? "Ikon inline"
+                        : seg.color
+                          ? "Teks berwarna"
+                          : "Teks biasa"}
                     {segIndex > 0 ? ` · bagian ${segIndex + 1}` : ""}
                   </span>
-                  {(line.segments.length > 1 || seg.text || seg.color) && (
+                  {(line.segments.length > 1 || seg.text || seg.color || isImageSegment(seg) || isIconSegment(seg)) && (
                     <Button
                       type="button"
                       variant="ghost"
@@ -193,6 +252,38 @@ export function RichTextEditor({
                   )}
                 </div>
 
+                {isImageSegment(seg) ? (
+                  <ImageUploadField
+                    label="Gambar di antara teks"
+                    hint="PNG/SVG transparan disarankan. Muncul inline di judul."
+                    imageUrl={seg.imageUrl ?? ""}
+                    alt={seg.imageAlt ?? "Inline"}
+                    uploadPrefix={uploadPrefix}
+                    onChange={(url) => updateSegment(line.id, seg.id, { imageUrl: url })}
+                    previewClassName="h-16 w-16 rounded-lg object-contain bg-white border border-black/10"
+                  />
+                ) : isIconSegment(seg) ? (
+                  <div className="flex items-center gap-3">
+                    <Heart className="size-8 fill-[#DD74A5] text-[#DD74A5]" strokeWidth={0} />
+                    <div className="flex items-center gap-2 flex-1">
+                      <Palette className="size-4 text-black/40 shrink-0" />
+                      <input
+                        type="color"
+                        value={normalizeColor(seg.iconColor ?? "#DD74A5")}
+                        onChange={(e) => updateSegment(line.id, seg.id, { iconColor: e.target.value })}
+                        className="h-9 w-12 cursor-pointer rounded border border-black/15 bg-white"
+                        aria-label="Warna ikon hati"
+                      />
+                      <Input
+                        value={seg.iconColor ?? "#DD74A5"}
+                        onChange={(e) => updateSegment(line.id, seg.id, { iconColor: e.target.value })}
+                        placeholder="#DD74A5"
+                        className="w-28 h-9 text-xs font-mono bg-white"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <>
                 <Input
                   value={seg.text}
                   onChange={(e) => updateSegment(line.id, seg.id, { text: e.target.value })}
@@ -248,6 +339,8 @@ export function RichTextEditor({
                     </Button>
                   )}
                 </div>
+                  </>
+                )}
               </div>
             ))}
 
@@ -272,6 +365,30 @@ export function RichTextEditor({
                 <Palette className="size-3.5 mr-1" />
                 Tambah teks berwarna
               </Button>
+              {allowInlineImages && (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs border-[#DD74A5]/30 text-[#DD74A5]"
+                    onClick={() => addImageSegment(line.id)}
+                  >
+                    <ImagePlus className="size-3.5 mr-1" />
+                    Tambah gambar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs border-[#DD74A5]/30 text-[#DD74A5]"
+                    onClick={() => addHeartIconSegment(line.id)}
+                  >
+                    <Heart className="size-3.5 mr-1" />
+                    Tambah ikon hati
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         ))}

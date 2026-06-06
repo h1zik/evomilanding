@@ -146,7 +146,7 @@ export function CardShell({
   title: string;
   subtitle?: string;
   defaultOpen?: boolean;
-  onDelete: () => void;
+  onDelete?: () => void;
   children: React.ReactNode;
 }) {
   return (
@@ -159,16 +159,18 @@ export function CardShell({
             {subtitle && <p className="text-xs text-black/45 mt-0.5">{subtitle}</p>}
           </div>
         </CollapsibleTrigger>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="text-red-600 hover:text-red-700 hover:bg-red-50 shrink-0"
-          onClick={onDelete}
-        >
-          <Trash2 className="size-4" />
-          <span className="sr-only sm:not-sr-only sm:inline">Hapus</span>
-        </Button>
+        {onDelete ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50 shrink-0"
+            onClick={onDelete}
+          >
+            <Trash2 className="size-4" />
+            <span className="sr-only sm:not-sr-only sm:inline">Hapus</span>
+          </Button>
+        ) : null}
       </div>
       <CollapsibleContent className="p-4 space-y-4">{children}</CollapsibleContent>
     </Collapsible>

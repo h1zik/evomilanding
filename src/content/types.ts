@@ -1,5 +1,17 @@
 export type StoryIcon = "heart" | "leaf" | "sparkles";
 
+export type CounterAvatarIconType = "star" | "dot" | "heart" | "sparkles" | "leaf" | "flame";
+
+/** Ikon overlap di kiri angka live counter */
+export interface CounterAvatar {
+  id: string;
+  icon: CounterAvatarIconType;
+  bgColor: string;
+  iconColor: string;
+  /** Jika diisi, gambar menggantikan ikon preset */
+  imageUrl: string;
+}
+
 export interface MarqueeItem {
   id: string;
   text: string;
@@ -97,12 +109,18 @@ export interface LandingContent {
     counterLabel: string;
     counterSuffix: string;
     counterStart: number;
+    /** Ikon overlap di kiri angka counter */
+    counterAvatars: CounterAvatar[];
     /** Judul utama — mendukung <br>, [#hex]teks[/], **bold** */
     title: string;
     /** @deprecated Dipakai hanya jika `title` kosong (migrasi data lama) */
     titleLine1?: string;
     titleHighlight?: string;
     titleLine2?: string;
+    /** Baris subjudul pertama (di bawah judul utama) */
+    subtitleLine1?: string;
+    /** Baris subjudul kedua */
+    subtitleLine2?: string;
     description: string;
     ctaText: string;
     mascots: HeroMascot[];
@@ -123,16 +141,23 @@ export interface LandingContent {
     cards: StoryCard[];
   };
   scents: {
-    titleBefore: string;
-    titleHighlight: string;
-    titleAfter: string;
+    /** Judul section — mendukung <br>, warna, gambar/ikon inline */
+    title: string;
+    /** @deprecated Dipakai jika `title` kosong (migrasi data lama) */
+    titleBefore?: string;
+    titleHighlight?: string;
+    titleAfter?: string;
     description: string;
     cards: ScentCard[];
   };
   waitlist: {
     badge: string;
     titleBefore: string;
+    /** Warna teks judul utama (sebelum angka diskon) */
+    titleColor: string;
     discountPercent: string;
+    /** Warna angka diskon, mis. 20% */
+    discountPercentColor: string;
     description: string;
     counterLabel: string;
     form: {

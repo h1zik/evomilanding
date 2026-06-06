@@ -7,7 +7,7 @@ import { useContent } from "@/content/ContentContext";
 import { fillTemplate, renderInline, renderRichText, stripRichText } from "@/content/renderInline";
 import { addSubmission, fetchWaitlistCount } from "@/content/waitlistStorage";
 import { BrandMark } from "./BrandMark";
-import type { HeroDecoration, HeroMascot, StoryIcon } from "@/content/types";
+import type { CounterAvatar, CounterAvatarIconType, HeroDecoration, HeroMascot, StoryIcon } from "@/content/types";
 import {
   Carousel,
   CarouselContent,
@@ -67,7 +67,7 @@ function HeroMascotCard({ mascot, hover = false }: { mascot: HeroMascot; hover?:
       )}
       <p className="tracking-tight text-center leading-tight font-semibold mt-2">
         <span style={{ color: mascot.nameColor }}>{mascot.name}</span>
-        <br />
+        {" "}
         <span style={{ color: mascot.subColor }}>{mascot.sub}</span>
       </p>
     </>
@@ -200,6 +200,98 @@ function StarBurst({ className, color = "#FFD521" }: { className?: string; color
   );
 }
 
+function CounterAvatarIconGlyph({
+  icon,
+  iconColor,
+}: {
+  icon: CounterAvatarIconType;
+  iconColor: string;
+}) {
+  const shapeCls = "w-[68%] h-[68%] max-w-none shrink-0";
+  const dotCls = "w-[48%] h-[48%] max-w-none shrink-0";
+
+  switch (icon) {
+    case "star":
+      return <StarBurst className={shapeCls} color={iconColor} />;
+    case "dot":
+      return (
+        <span
+          className={cn("block rounded-full", dotCls)}
+          style={{ backgroundColor: iconColor }}
+        />
+      );
+    case "heart":
+      return (
+        <Heart
+          className={cn(shapeCls, "fill-current")}
+          style={{ color: iconColor }}
+          strokeWidth={0}
+        />
+      );
+    case "sparkles":
+      return <Sparkles className={shapeCls} style={{ color: iconColor }} strokeWidth={2.25} />;
+    case "leaf":
+      return <Leaf className={shapeCls} style={{ color: iconColor }} strokeWidth={2.25} />;
+    case "flame":
+      return <Flame className={shapeCls} style={{ color: iconColor }} strokeWidth={2.25} />;
+    default:
+      return <StarBurst className={shapeCls} color={iconColor} />;
+  }
+}
+
+function LiveCounterBadge({ label }: { label: string }) {
+  return (
+    <div className="inline-flex items-center gap-2 rounded-full bg-[#EBEBEB] px-2.5 py-1">
+      <span className="relative flex size-4 shrink-0 items-center justify-center" aria-hidden>
+        <span className="absolute inset-0 rounded-full bg-[#E33D35]/20" />
+        <span className="absolute inset-[18%] rounded-full bg-[#E33D35]/35" />
+        <span className="relative size-2 rounded-full bg-[#E33D35]" />
+      </span>
+      <span
+        className="uppercase whitespace-nowrap text-black tracking-[0.08em] font-semibold"
+        style={{ fontSize: 13 }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function CounterAvatarStack({ avatars }: { avatars: CounterAvatar[] }) {
+  if (avatars.length === 0) return null;
+
+  return (
+    <div
+      className="shrink-0 flex items-center rounded-full border border-black/10 bg-white p-px shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+      aria-hidden
+    >
+      <div className="flex items-center">
+        {avatars.map((avatar, index) => (
+          <div
+            key={avatar.id}
+            className="relative flex size-14 md:size-16 items-center justify-center overflow-visible rounded-full border-2 border-white shrink-0"
+            style={{
+              backgroundColor: avatar.bgColor,
+              marginLeft: index > 0 ? -18 : 0,
+              zIndex: index + 1,
+            }}
+          >
+            {avatar.imageUrl ? (
+              <img
+                src={avatar.imageUrl}
+                alt=""
+                className="w-[65%] h-[65%] max-w-none object-contain"
+              />
+            ) : (
+              <CounterAvatarIconGlyph icon={avatar.icon} iconColor={avatar.iconColor} />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function EvomiLanding() {
   const { content, loading } = useContent();
   const [count, setCount] = useState(0);
@@ -304,54 +396,92 @@ export function EvomiLanding() {
           <HeroDecorationLayer decorations={hero.decorations} viewport="mobile" />
         </div>
 
-        <div className="relative z-10 max-w-5xl mx-auto px-6 py-20 flex flex-col items-center text-center w-full">
+        <div className="relative z-10 max-w-5xl mx-auto px-6 py-12 md:py-16 flex flex-col items-center text-center w-full">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="mb-10"
+            className="mb-8 md:mb-10"
           >
-            <div className="relative bg-white rounded-3xl px-10 py-6 text-center">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#E33D35] text-white tracking-[0.2em] px-3 py-1 rounded-full flex items-center gap-1 whitespace-nowrap" style={{ fontSize: 12, fontWeight: 600 }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FFD521] animate-pulse" />
-                {hero.counterLabel}
-              </div>
+            <div className="flex items-center justify-center gap-5 md:gap-7">
+              <CounterAvatarStack avatars={hero.counterAvatars} />
               <motion.div
                 key={count}
-                initial={{ scale: 1.15, color: "#E33D35" }}
+                initial={{ scale: 1.08, color: "#E33D35" }}
                 animate={{ scale: 1, color: "#1172ba" }}
                 transition={{ duration: 0.4 }}
-                className="tabular-nums tracking-tighter leading-none"
-                style={{ fontSize: "clamp(72px, 12vw, 144px)", fontWeight: 700 }}
+                className="tabular-nums tracking-tighter leading-none text-[#1172ba] mx-1 md:mx-2"
+                style={{ fontSize: "clamp(56px, 10vw, 96px)", fontWeight: 700 }}
               >
                 {count.toLocaleString("id-ID")}
               </motion.div>
-              <div className="mt-2 tracking-tight" style={{ fontSize: 35, fontWeight: 600, color: "#1172ba" }}>
-                {hero.counterSuffix}
+              <div className="flex flex-col items-start text-left gap-1.5">
+                <LiveCounterBadge label={hero.counterLabel} />
+                <p
+                  className="text-sm md:text-base font-medium text-black leading-snug max-w-[9rem] md:max-w-[11rem]"
+                >
+                  {hero.counterSuffix}
+                </p>
               </div>
             </div>
           </motion.div>
 
-          <h1
-            className="leading-[1.3] md:leading-[0.95] tracking-tight text-center max-md:px-1 [&_br]:block"
-            style={{ fontSize: "clamp(48px, 8vw, 112px)", fontWeight: 600 }}
-          >
-            {renderRichText(hero.title, { squiggleFirstColor: true, squiggleColor: "#FFD521" })}
-          </h1>
+          <div className="flex flex-col items-center text-center w-full max-md:px-1">
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="leading-[1.15] tracking-tight text-black w-full max-w-3xl mx-auto"
+              style={{ fontSize: "clamp(32px, 5vw, 52px)", fontWeight: 600 }}
+            >
+              {renderRichText(hero.title)}
+            </motion.h1>
 
-          <p className="mt-8 max-w-2xl text-lg md:text-xl leading-relaxed text-black/80 text-center mx-auto">
+            {(hero.subtitleLine1 || hero.subtitleLine2) && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="mt-8 md:mt-10 flex flex-col items-center gap-1 w-full max-w-4xl mx-auto"
+              >
+                {hero.subtitleLine1 ? (
+                  <p
+                    className="leading-[1.4] font-normal text-black w-full max-w-3xl mx-auto"
+                    style={{ fontSize: "clamp(20px, 3.5vw, 34px)" }}
+                  >
+                    {renderRichText(hero.subtitleLine1)}
+                  </p>
+                ) : null}
+                {hero.subtitleLine2 ? (
+                  <p
+                    className="leading-[1.4] font-normal text-black w-full max-w-4xl mx-auto"
+                    style={{ fontSize: "clamp(20px, 3.5vw, 34px)" }}
+                  >
+                    {renderRichText(hero.subtitleLine2)}
+                  </p>
+                ) : null}
+              </motion.div>
+            )}
+          </div>
+
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="mt-6 md:mt-8 max-w-[760px] text-sm md:text-base leading-relaxed text-black/65 text-center mx-auto"
+          >
             {renderRichText(hero.description)}
-          </p>
+          </motion.p>
 
           <HeroMascotsMobileCarousel mascots={hero.mascots} />
 
-          <div className="mt-10 hidden md:flex flex-wrap gap-6 sm:gap-8 justify-center items-end">
+          <div className="mt-8 md:mt-10 hidden md:flex flex-wrap gap-8 sm:gap-10 justify-center items-end">
             {hero.mascots.map((m) => (
               <HeroMascotCard key={m.id} mascot={m} hover />
             ))}
           </div>
 
-          <div className="mt-10 flex flex-col items-center gap-5 w-full">
+          <div className="mt-8 md:mt-10 flex flex-col items-center gap-5 w-full">
             <a href="#waitlist" className="group inline-flex items-center gap-3 bg-[#1172ba] text-white px-8 py-4 rounded-full border-2 border-black shadow-[6px_6px_0_0_#000] hover:shadow-[2px_2px_0_0_#000] hover:translate-x-1 hover:translate-y-1 transition-all">
               <span className="tracking-tight text-lg">{hero.ctaText}</span>
               <Send className="w-5 h-5 group-hover:rotate-12 transition" />
@@ -484,12 +614,10 @@ export function EvomiLanding() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12 flex flex-col items-center w-full px-2">
             <h2
-              className="leading-[1] tracking-tight whitespace-nowrap"
-              style={{ fontSize: "clamp(24px, 5.5vw, 80px)", fontWeight: 600 }}
+              className="leading-[1.1] tracking-tight text-center [&_br]:block"
+              style={{ fontSize: "clamp(24px, 5.5vw, 80px)", fontWeight: 500 }}
             >
-              {scents.titleBefore}
-              <span style={{ color: "#1172ba" }}>{scents.titleHighlight}</span>
-              {scents.titleAfter}
+              {renderRichText(scents.title, { inlineImageHeight: "0.85em" })}
             </h2>
             <p className="mt-4 max-w-3xl text-black/70 text-lg leading-relaxed">{scents.description}</p>
           </div>
@@ -571,9 +699,25 @@ export function EvomiLanding() {
               <span className="tracking-tight">{waitlist.badge}</span>
             </div>
 
-            <h2 className="leading-[0.95] tracking-tight" style={{ fontSize: "clamp(32px, 8vw, 70px)", fontWeight: 600, color: "#fff" }}>
+            <h2
+              className="leading-[0.95] tracking-tight"
+              style={{
+                fontSize: "clamp(32px, 8vw, 70px)",
+                fontWeight: 600,
+                color: waitlist.titleColor || "#FFFFFF",
+              }}
+            >
               {waitlist.titleBefore}
-              <span style={{ fontSize: "1.6em", color: "#FFD521", display: "inline-block", lineHeight: 1 }}>{waitlist.discountPercent}</span>
+              <span
+                style={{
+                  fontSize: "1.6em",
+                  color: waitlist.discountPercentColor || "#FFD521",
+                  display: "inline-block",
+                  lineHeight: 1,
+                }}
+              >
+                {waitlist.discountPercent}
+              </span>
             </h2>
 
             <p className="mt-6 text-lg max-w-md mx-auto lg:mx-0 text-white">

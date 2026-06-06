@@ -1,22 +1,27 @@
 import { Fragment, type ReactNode } from "react";
+import { Heart } from "lucide-react";
 
 export const RICH_TEXT_HINT =
-  "**teks** = bold · <br> atau baris baru = pindah baris · [#1172ba]teks[/] atau [color:#1172ba]teks[/color] = warna";
+  "**teks** = bold · <br> atau baris baru = pindah baris · [#1172ba]teks[/] = warna · [img:/url] = gambar inline · [icon:heart:#DD74A5] = ikon hati";
 
 const BREAK_RE = /<br\s*\/?>|\n/gi;
 const TOKEN_PATTERN =
-  "(\\*\\*[^*]+\\*\\*|\\[#[0-9A-Fa-f]{3,8}\\][\\s\\S]*?\\[\\/\\]|\\[color:#[0-9A-Fa-f]{3,8}\\][\\s\\S]*?\\[\\/color\\])";
+  "(\\*\\*[^*]+\\*\\*|\\[img:[^\\]|]+(?:\\|[^\\]]*)?\\]|\\[icon:heart(?::#[0-9A-Fa-f]{3,8})?\\]|\\[#[0-9A-Fa-f]{3,8}\\][\\s\\S]*?\\[\\/\\]|\\[color:#[0-9A-Fa-f]{3,8}\\][\\s\\S]*?\\[\\/color\\])";
 
 export type RichTextOptions = {
   /** Garis bawah dekoratif pada segmen berwarna pertama (hero title) */
   squiggleFirstColor?: boolean;
   squiggleColor?: string;
+  /** Tinggi gambar/ikon inline relatif terhadap font (default 0.85em) */
+  inlineImageHeight?: string;
 };
 
 /** Plain text untuk alt, aria, dll. */
 export function stripRichText(text: string): string {
   return text
     .replace(BREAK_RE, " ")
+    .replace(/\[img:[^\]|]+(?:\|[^\]]*)?\]/gi, " ")
+    .replace(/\[icon:heart(?::#[0-9A-Fa-f]{3,8})?\]/gi, " ")
     .replace(/\[#[0-9A-Fa-f]{3,8}\]([\s\S]*?)\[\/\]/gi, "$1")
     .replace(/\[color:(#[0-9A-Fa-f]{3,8})\]([\s\S]*?)\[\/color\]/gi, "$1")
     .replace(/\*\*([^*]+)\*\*/g, "$1")
@@ -47,6 +52,34 @@ function parseInlineSegment(
     const token = match[0];
     if (token.startsWith("**")) {
       nodes.push(<b key={`${keyPrefix}-b-${tokenKey++}`}>{token.slice(2, -2)}</b>);
+    } else if (token.startsWith("[img:")) {
+      const imgMatch = token.match(/^\[img:([^\]|]+)(?:\|([^\]]*))?\]$/);
+      if (imgMatch) {
+        const inlineH = options.inlineImageHeight ?? "0.85em";
+        nodes.push(
+          <img
+            key={`${keyPrefix}-img-${tokenKey++}`}
+            src={imgMatch[1]}
+            alt={imgMatch[2] ?? ""}
+            className="inline-block align-middle w-auto mx-0.5"
+            style={{ height: inlineH }}
+          />,
+        );
+      } else {
+        nodes.push(<Fragment key={`${keyPrefix}-raw-${tokenKey++}`}>{token}</Fragment>);
+      }
+    } else if (token.startsWith("[icon:heart")) {
+      const iconMatch = token.match(/^\[icon:heart(?::(#[0-9A-Fa-f]{3,8}))?\]$/);
+      const color = iconMatch?.[1] ?? "#DD74A5";
+      const inlineH = options.inlineImageHeight ?? "0.85em";
+      nodes.push(
+        <Heart
+          key={`${keyPrefix}-icon-${tokenKey++}`}
+          className="inline-block align-middle fill-current mx-0.5"
+          style={{ color, height: inlineH, width: inlineH }}
+          strokeWidth={0}
+        />,
+      );
     } else {
       const shortColor = token.match(/^\[#([0-9A-Fa-f]{3,8})\]([\s\S]*?)\[\/\]$/);
       const longColor = token.match(/^\[color:(#[0-9A-Fa-f]{3,8})\]([\s\S]*?)\[\/color\]$/);

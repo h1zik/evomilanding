@@ -2,9 +2,14 @@
 
 export type TextSegment = {
   id: string;
+  kind?: "text" | "image" | "icon";
   text: string;
   color?: string;
   bold?: boolean;
+  imageUrl?: string;
+  imageAlt?: string;
+  icon?: "heart";
+  iconColor?: string;
 };
 
 export type TextLine = {
@@ -14,7 +19,7 @@ export type TextLine = {
 
 const BREAK_SPLIT = /<br\s*\/?>|\n/gi;
 const TOKEN_RE =
-  /(\*\*[^*]+\*\*|\[#[0-9A-Fa-f]{3,8}\][\s\S]*?\[\/\]|\[color:#[0-9A-Fa-f]{3,8}\][\s\S]*?\[\/color\])/gi;
+  /(\*\*[^*]+\*\*|\[img:[^\]|]+(?:\|[^\]]*)?\]|\[icon:heart(?::#[0-9A-Fa-f]{3,8})?\]|\[#[0-9A-Fa-f]{3,8}\][\s\S]*?\[\/\]|\[color:#[0-9A-Fa-f]{3,8}\][\s\S]*?\[\/color\])/gi;
 
 export function newSegmentId(): string {
   return `seg-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -37,7 +42,29 @@ function parseLine(line: string): TextSegment[] {
       segments.push({ id: newSegmentId(), text: line.slice(last, match.index) });
     }
     const token = match[0];
-    if (token.startsWith("**")) {
+    if (token.startsWith("[img:")) {
+      const imgMatch = token.match(/^\[img:([^\]|]+)(?:\|([^\]]*))?\]$/);
+      if (imgMatch) {
+        segments.push({
+          id: newSegmentId(),
+          kind: "image",
+          text: "",
+          imageUrl: imgMatch[1],
+          imageAlt: imgMatch[2],
+        });
+      } else {
+        segments.push({ id: newSegmentId(), text: token });
+      }
+    } else if (token.startsWith("[icon:heart")) {
+      const iconMatch = token.match(/^\[icon:heart(?::(#[0-9A-Fa-f]{3,8}))?\]$/);
+      segments.push({
+        id: newSegmentId(),
+        kind: "icon",
+        icon: "heart",
+        iconColor: iconMatch?.[1] ?? "#DD74A5",
+        text: "",
+      });
+    } else if (token.startsWith("**")) {
       segments.push({ id: newSegmentId(), text: token.slice(2, -2), bold: true });
     } else {
       const short = token.match(/^\[#([0-9A-Fa-f]{3,8})\]([\s\S]*?)\[\/\]$/);
@@ -81,6 +108,15 @@ export function parseRichTextToLines(value: string): TextLine[] {
 }
 
 function segmentToString(seg: TextSegment): string {
+  if (seg.kind === "image") {
+    const url = seg.imageUrl?.trim() ?? "";
+    if (!url) return "";
+    return seg.imageAlt ? `[img:${url}|${seg.imageAlt}]` : `[img:${url}]`;
+  }
+  if (seg.kind === "icon" && seg.icon === "heart") {
+    const color = seg.iconColor?.startsWith("#") ? seg.iconColor : `#${seg.iconColor ?? "DD74A5"}`;
+    return `[icon:heart:${color}]`;
+  }
   if (!seg.text) return "";
   let inner = seg.text;
   if (seg.bold) inner = `**${inner}**`;

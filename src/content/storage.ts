@@ -1,4 +1,4 @@
-import type { HeroDecoration, HeroHighlight, HeroMascot, LandingContent } from "./types";
+import type { CounterAvatar, CounterAvatarIconType, HeroDecoration, HeroHighlight, HeroMascot, LandingContent } from "./types";
 import { defaultContent } from "./defaultContent";
 
 function resolveHeroTitle(hero: LandingContent["hero"]): string {
@@ -10,6 +10,16 @@ function resolveHeroTitle(hero: LandingContent["hero"]): string {
   const secondLine = [colored, line2].filter(Boolean).join(" ");
   if (line1 && secondLine) return `${line1}<br>${secondLine}`;
   return line1 || secondLine || defaultContent.hero.title;
+}
+
+function resolveScentsTitle(scents: LandingContent["scents"]): string {
+  if (scents.title?.trim()) return scents.title.trim();
+  const before = scents.titleBefore?.trim() ?? "";
+  const highlight = scents.titleHighlight?.trim() ?? "";
+  const after = scents.titleAfter?.trim() ?? "";
+  if (!before && !highlight && !after) return defaultContent.scents.title;
+  const colored = highlight ? `[#1172ba]${highlight}[/]` : "";
+  return `${before}${colored}${after}`;
 }
 
 function mascotsFromScents(content: LandingContent): HeroMascot[] {
@@ -40,6 +50,31 @@ function defaultHighlights(): HeroHighlight[] {
 
 function defaultDecorations(): HeroDecoration[] {
   return defaultContent.hero.decorations;
+}
+
+const COUNTER_AVATAR_ICONS = new Set<CounterAvatarIconType>([
+  "star",
+  "dot",
+  "heart",
+  "sparkles",
+  "leaf",
+  "flame",
+]);
+
+function defaultCounterAvatars(): CounterAvatar[] {
+  return defaultContent.hero.counterAvatars;
+}
+
+function normalizeCounterAvatar(avatar: CounterAvatar, index: number): CounterAvatar {
+  const def = defaultContent.hero.counterAvatars[index];
+  const icon = COUNTER_AVATAR_ICONS.has(avatar.icon) ? avatar.icon : (def?.icon ?? "star");
+  return {
+    id: avatar.id || def?.id || `counter-${index + 1}`,
+    icon,
+    bgColor: avatar.bgColor || def?.bgColor || "#1172ba",
+    iconColor: avatar.iconColor || def?.iconColor || "#60BBFF",
+    imageUrl: avatar.imageUrl ?? "",
+  };
 }
 
 const STORAGE_KEY = "evomi-landing-content";
@@ -105,6 +140,7 @@ function normalizeContent(content: LandingContent): LandingContent {
     ...(content.scents ?? {}),
     cards: content.scents?.cards ?? defaultContent.scents.cards,
   };
+  const waitlist = { ...defaultContent.waitlist, ...(content.waitlist ?? {}) };
 
   return {
     ...defaultContent,
@@ -130,6 +166,7 @@ function normalizeContent(content: LandingContent): LandingContent {
     },
     scents: {
       ...scents,
+      title: resolveScentsTitle(scents),
       cards: scents.cards.map((card, i) => {
         const def = defaultContent.scents.cards[i];
         return {
@@ -145,9 +182,19 @@ function normalizeContent(content: LandingContent): LandingContent {
         };
       }),
     },
+    waitlist: {
+      ...waitlist,
+      titleColor: waitlist.titleColor ?? defaultContent.waitlist.titleColor,
+      discountPercentColor:
+        waitlist.discountPercentColor ?? defaultContent.waitlist.discountPercentColor,
+    },
     hero: {
       ...hero,
       title: resolveHeroTitle(hero),
+      counterAvatars:
+        hero.counterAvatars && hero.counterAvatars.length > 0
+          ? hero.counterAvatars.map(normalizeCounterAvatar)
+          : defaultCounterAvatars(),
       mascots:
         hero.mascots && hero.mascots.length > 0
           ? hero.mascots.map((m, i) => normalizeMascot(m, i, { ...content, scents }))

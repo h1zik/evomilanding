@@ -6,21 +6,28 @@ export const defaultContent: LandingContent = {
     brandLogoUrl: "",
   },
   hero: {
-    counterLabel: "LIVE COUNTER",
-    counterSuffix: "orang sudah masuk waitlist ✨",
+    counterLabel: "LIVE",
+    counterSuffix: "Orang sudah masuk waitlist",
     counterStart: 0,
-    title: "Temukan karakter<br>[#1172ba]aromamu[/] di Evomi",
-    titleLine1: "Temukan karakter",
-    titleHighlight: "aromamu",
-    titleLine2: "di Evomi",
+    counterAvatars: [
+      { id: "counter-1", icon: "star", bgColor: "#1172ba", iconColor: "#60BBFF", imageUrl: "" },
+      { id: "counter-2", icon: "dot", bgColor: "#5EA14A", iconColor: "#A5E194", imageUrl: "" },
+      { id: "counter-3", icon: "heart", bgColor: "#DD74A5", iconColor: "#F899C6", imageUrl: "" },
+    ],
+    title: "Join the waiting list.",
+    titleLine1: "Join the waiting list.",
+    titleHighlight: "",
+    titleLine2: "",
+    subtitleLine1: 'Something that smells like [#5EA14A]"you"[/] is coming.',
+    subtitleLine2: "Kamu mau jadi [#DD74A5]**first to smell it?**[/]",
     description:
-      "EVOMI bukan parfum biasa. ini medium ekspresi diri buat Gen Z yang nggak takut jadi **setiap versi dari diri sendiri**. 4 karakter, 4 mood, 4 versi kamu.",
-    ctaText: "amankan tempatmu",
+      "Dengan aroma yang dibuat untuk lebih dari sekadar wangi, dan cerita yang mungkin terasa<br>**'kok ini gue banget?'**, sekarang waktunya kamu jadi bagian dari awal perjalanannya.",
+    ctaText: "Amankan tempatmu",
     mascots: [
-      { id: "scent-1", name: "Purpose", nameColor: "#000000", sub: "Prestige", subColor: "#1172ba", imageUrl: "" },
-      { id: "scent-2", name: "Rebel", nameColor: "#000000", sub: "Brave", subColor: "#E33D35", imageUrl: "" },
-      { id: "scent-3", name: "Peaceful", nameColor: "#000000", sub: "Calm", subColor: "#5EA14A", imageUrl: "" },
-      { id: "scent-4", name: "Sweet", nameColor: "#000000", sub: "Shy", subColor: "#DD74A5", imageUrl: "" },
+      { id: "scent-1", name: "Purpose", nameColor: "#1172ba", sub: "Prestige", subColor: "#1172ba", imageUrl: "" },
+      { id: "scent-4", name: "Sweet", nameColor: "#DD74A5", sub: "Shy", subColor: "#DD74A5", imageUrl: "" },
+      { id: "scent-3", name: "Peaceful", nameColor: "#5EA14A", sub: "Calm", subColor: "#5EA14A", imageUrl: "" },
+      { id: "scent-2", name: "Rebel", nameColor: "#E33D35", sub: "Brave", subColor: "#E33D35", imageUrl: "" },
     ],
     decorations: [],
     highlights: [
@@ -77,9 +84,10 @@ export const defaultContent: LandingContent = {
     ],
   },
   scents: {
-    titleBefore: "kenalan sama ",
-    titleHighlight: "keluarga",
-    titleAfter: "nya.",
+    title: "Kenalan Dulu,<br>Jatuh Cinta [icon:heart:#DD74A5] Belakangan.",
+    titleBefore: "Kenalan Dulu,",
+    titleHighlight: "",
+    titleAfter: "",
     description: "pilih yang paling kena di hati. atau koleksi semuanya — kita nggak gatekeep kok.",
     cards: [
       {
@@ -155,7 +163,9 @@ export const defaultContent: LandingContent = {
   waitlist: {
     badge: "limited drop · 1000 botol pertama",
     titleBefore: "Gabung Waitlist sekarang dan dapatkan voucher diskon ",
+    titleColor: "#FFFFFF",
     discountPercent: "20%",
+    discountPercentColor: "#FFD521",
     description:
       "tinggalkan nomor WA kamu, kita kabarin pas EVOMI launch + diskon early bird **30%** khusus waitlist 💌",
     counterLabel: "ORANG NGANTRI · LIVE",
