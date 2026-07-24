@@ -6,9 +6,15 @@ import { Label } from "../components/ui/label";
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD ?? "evomi2026";
 const SESSION_KEY = "evomi-admin-auth";
+const TOKEN_KEY = "evomi-admin-token";
 
 export function isAdminAuthenticated(): boolean {
   return sessionStorage.getItem(SESSION_KEY) === "true";
+}
+
+/** Password admin untuk header x-admin-password (dipakai endpoint broadcast) */
+export function getAdminToken(): string {
+  return sessionStorage.getItem(TOKEN_KEY) ?? "";
 }
 
 export function AdminLogin() {
@@ -24,6 +30,7 @@ export function AdminLogin() {
     e.preventDefault();
     if (password === ADMIN_PASSWORD) {
       sessionStorage.setItem(SESSION_KEY, "true");
+      sessionStorage.setItem(TOKEN_KEY, password);
       navigate("/admin/panel");
     } else {
       setError("Password salah. Coba lagi.");
@@ -69,4 +76,5 @@ export function AdminLogin() {
 
 export function logoutAdmin() {
   sessionStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
 }
