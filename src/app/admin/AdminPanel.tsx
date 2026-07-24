@@ -13,6 +13,7 @@ import {
   RotateCcw,
   Save,
   ScrollText,
+  Send,
   Settings,
   Sparkles,
   Upload,
@@ -29,6 +30,7 @@ import { Badge } from "../components/ui/badge";
 import { isAdminAuthenticated, logoutAdmin } from "./AdminLogin";
 import { StatCard } from "./components/AdminFields";
 import { WaitlistLeads } from "./WaitlistLeads";
+import { BroadcastPanel } from "./BroadcastPanel";
 import {
   FooterSection,
   HeroSection,
@@ -42,6 +44,7 @@ import {
 type AdminView =
   | "dashboard"
   | "leads"
+  | "broadcast"
   | "hero"
   | "marquee"
   | "story"
@@ -174,6 +177,8 @@ export function AdminPanel() {
         return <FooterSection {...props} />;
       case "leads":
         return <WaitlistLeads />;
+      case "broadcast":
+        return <BroadcastPanel />;
       case "settings":
         return (
           <div className="space-y-6 max-w-xl">
@@ -240,14 +245,19 @@ export function AdminPanel() {
     }
   }
 
+  /** Hanya view editor konten yang punya tombol Simpan */
+  const isContentView = CONTENT_NAV.some((n) => n.id === view);
+
   const viewTitle =
     view === "dashboard"
       ? "Ringkasan"
       : view === "leads"
         ? "Pendaftar Waitlist"
-        : view === "settings"
-          ? "Pengaturan"
-          : CONTENT_NAV.find((n) => n.id === view)?.label ?? "Admin";
+        : view === "broadcast"
+          ? "Broadcast WhatsApp"
+          : view === "settings"
+            ? "Pengaturan"
+            : CONTENT_NAV.find((n) => n.id === view)?.label ?? "Admin";
 
   return (
     <div className="h-screen flex overflow-hidden bg-[#f0f4f8] font-sans">
@@ -266,6 +276,7 @@ export function AdminPanel() {
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           <NavBtn active={view === "dashboard"} onClick={() => setView("dashboard")} icon={LayoutDashboard} label="Ringkasan" />
           <NavBtn active={view === "leads"} onClick={() => setView("leads")} icon={Users} label="Pendaftar Waitlist" badge={leadCount > 0 ? String(leadCount) : undefined} />
+          <NavBtn active={view === "broadcast"} onClick={() => setView("broadcast")} icon={Send} label="Broadcast WA" />
 
           <p className="text-[10px] uppercase tracking-widest text-white/40 px-3 pt-4 pb-2">Konten Landing</p>
           {CONTENT_NAV.map((item) => (
@@ -315,7 +326,7 @@ export function AdminPanel() {
               <Button variant="outline" size="sm" className="lg:hidden" asChild>
                 <Link to="/">Landing</Link>
               </Button>
-              {view !== "leads" && view !== "dashboard" && view !== "settings" && (
+              {isContentView && (
                 <Button size="sm" onClick={handleSave} disabled={saving || !isDirty} className="bg-[#1172ba] hover:bg-[#0e5f9e]">
                   <Save className="size-4" />
                   <span className="hidden sm:inline">{saving ? "Menyimpan..." : "Simpan"}</span>
@@ -328,6 +339,7 @@ export function AdminPanel() {
           <div className="flex lg:hidden gap-1 mt-3 overflow-x-auto pb-1 -mx-1 px-1">
             <MobileNavChip active={view === "dashboard"} onClick={() => setView("dashboard")} label="Ringkasan" />
             <MobileNavChip active={view === "leads"} onClick={() => setView("leads")} label={`Pendaftar${leadCount ? ` (${leadCount})` : ""}`} />
+            <MobileNavChip active={view === "broadcast"} onClick={() => setView("broadcast")} label="Broadcast WA" />
             {CONTENT_NAV.map((item) => (
               <MobileNavChip key={item.id} active={view === item.id} onClick={() => setView(item.id)} label={item.label} />
             ))}
@@ -341,7 +353,7 @@ export function AdminPanel() {
         </main>
 
         {/* Sticky save bar */}
-        {isDirty && view !== "leads" && view !== "dashboard" && view !== "settings" && (
+        {isDirty && isContentView && (
           <div className="fixed bottom-0 left-0 right-0 lg:left-64 bg-white border-t border-black/10 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-50">
             <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
               <p className="text-sm text-black/60">Ada perubahan yang belum disimpan</p>

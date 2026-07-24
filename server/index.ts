@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import { getDatabaseHost, initDatabase, pool } from "./db.js";
 import { ensureUploadsDir, resolveUploadsDir } from "./uploadPaths.js";
 import { attachOfficialRoute, SPA_FALLBACK_PATTERN } from "./officialRoute.js";
+import { attachBroadcastRoute } from "./broadcastRoute.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
@@ -225,6 +226,7 @@ async function start() {
     process.exit(1);
   }
   await initDatabase();
+  attachBroadcastRoute(app);
   attachOfficialRoute(app);
   attachFrontend();
   app.listen(port, "0.0.0.0", () => {

@@ -42,6 +42,22 @@ export async function initDatabase() {
 
       CREATE INDEX IF NOT EXISTS idx_waitlist_submitted_at
         ON waitlist_submissions (submitted_at DESC);
+
+      CREATE TABLE IF NOT EXISTS broadcast_campaigns (
+        id TEXT PRIMARY KEY,
+        message TEXT NOT NULL,
+        image_url TEXT,
+        target_count INTEGER NOT NULL DEFAULT 0,
+        success_count INTEGER NOT NULL DEFAULT 0,
+        failed_count INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'sent',
+        detail TEXT,
+        failures JSONB NOT NULL DEFAULT '[]'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_broadcast_created_at
+        ON broadcast_campaigns (created_at DESC);
     `);
 
     const existing = await client.query(
