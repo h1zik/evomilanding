@@ -216,10 +216,21 @@ export function buildBodyContent(content: AnyContent): string {
     .filter((s: string) => s.length > 2);
 
   const scentCards = Array.isArray(scents.cards) ? scents.cards : [];
+  const waitlist = content?.waitlist ?? {};
+  const testimonials = content?.testimonials ?? {};
+  const footer = content?.footer ?? {};
 
   const parts: string[] = [];
   parts.push(`<h1>${escapeHtml(h1)}</h1>`);
   for (const p of paragraphs) parts.push(`<p>${escapeHtml(p)}</p>`);
+
+  // Tagline berjalan (marquee) — buang pemisah "·" yang bukan kata bermakna
+  const marquee = Array.isArray(content?.marquee) ? content.marquee : [];
+  const marqueeText = marquee
+    .map((m: AnyContent) => stripRich(m?.text))
+    .filter((t: string) => t.replace(/[·•.\s]/g, "").length > 1)
+    .join(" · ");
+  if (marqueeText) parts.push(`<p>${escapeHtml(marqueeText)}</p>`);
 
   if (storyTitle) parts.push(`<h2>${escapeHtml(storyTitle)}</h2>`);
   for (const s of storyText) parts.push(`<p>${escapeHtml(s)}</p>`);
@@ -232,12 +243,54 @@ export function buildBodyContent(content: AnyContent): string {
       .map((s: AnyContent) => {
         const name = escapeHtml(stripRich(s?.name));
         const sub = escapeHtml(stripRich(s?.sub));
+        const vibe = escapeHtml(stripRich(s?.vibe));
         const d = escapeHtml(stripRich(s?.desc));
-        return `<li><strong>${name}${sub ? ` (${sub})` : ""}</strong> — ${d}</li>`;
+        return `<li><strong>${name}${sub ? ` (${sub})` : ""}</strong>${vibe ? ` — ${vibe}` : ""}${d ? ` ${d}` : ""}</li>`;
       })
       .join("");
     parts.push(`<ul>${items}</ul>`);
   }
+
+  // Section waitlist (promo + ajakan) untuk memperkaya konten
+  const waitlistDesc = stripRich(waitlist.description);
+  const waitlistBadge = stripRich(waitlist.badge);
+  const discount = stripRich(waitlist.discountPercent);
+  const waitlistTitle = stripRich(waitlist.titleBefore);
+  if (waitlistTitle || waitlistDesc) {
+    parts.push(`<h2>${escapeHtml(waitlistTitle || "Gabung Waitlist EVOMI")}${discount ? ` ${escapeHtml(discount)}` : ""}</h2>`);
+    if (waitlistBadge) parts.push(`<p>${escapeHtml(waitlistBadge)}</p>`);
+    if (waitlistDesc) parts.push(`<p>${escapeHtml(waitlistDesc)}</p>`);
+    const formSub = stripRich(waitlist.form?.subtitle);
+    const formDisc = stripRich(waitlist.form?.disclaimer);
+    if (formSub) parts.push(`<p>${escapeHtml(formSub)}</p>`);
+    if (formDisc) parts.push(`<p>${escapeHtml(formDisc)}</p>`);
+  }
+
+  // Testimonial komunitas
+  const testimonialCards = Array.isArray(testimonials.cards) ? testimonials.cards : [];
+  if (testimonialCards.length > 0) {
+    const tTitle = [
+      stripRich(testimonials.titleBefore),
+      stripRich(testimonials.titleHighlight),
+      stripRich(testimonials.titleAfter),
+    ]
+      .filter(Boolean)
+      .join(" ");
+    parts.push(`<h2>${escapeHtml(tTitle || "Kata Komunitas")}</h2>`);
+    const quotes = testimonialCards
+      .map((t: AnyContent) => {
+        const who = escapeHtml(stripRich(t?.who));
+        const text = escapeHtml(stripRich(t?.text));
+        return text ? `<li>${who ? `<strong>${who}</strong>: ` : ""}${text}</li>` : "";
+      })
+      .filter(Boolean)
+      .join("");
+    if (quotes) parts.push(`<ul>${quotes}</ul>`);
+  }
+
+  // Tagline brand (footer)
+  const tagline = stripRich(footer.tagline);
+  if (tagline) parts.push(`<p>${escapeHtml(tagline)}</p>`);
 
   // Disembunyikan visual tapi tetap ada di DOM & terbaca crawler; React menimpanya saat load.
   return `<div id="seo-content" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">${parts.join(
