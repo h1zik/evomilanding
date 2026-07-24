@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   LogOut,
   MessageSquareQuote,
+  Megaphone,
   RotateCcw,
   Save,
   ScrollText,
@@ -36,6 +37,7 @@ import {
   HeroSection,
   MarqueeSection,
   ScentsSection,
+  SeoSection,
   StorySection,
   TestimonialsSection,
   WaitlistFormSection,
@@ -52,6 +54,7 @@ type AdminView =
   | "waitlist"
   | "testimonials"
   | "footer"
+  | "seo"
   | "settings";
 
 const CONTENT_NAV: { id: AdminView; label: string; icon: typeof Sparkles }[] = [
@@ -62,6 +65,7 @@ const CONTENT_NAV: { id: AdminView; label: string; icon: typeof Sparkles }[] = [
   { id: "waitlist", label: "Waitlist & Form", icon: Flame },
   { id: "testimonials", label: "Testimonial", icon: MessageSquareQuote },
   { id: "footer", label: "Footer", icon: Footprints },
+  { id: "seo", label: "SEO & Iklan", icon: Megaphone },
 ];
 
 export function AdminPanel() {
@@ -175,6 +179,8 @@ export function AdminPanel() {
         return <TestimonialsSection {...props} />;
       case "footer":
         return <FooterSection {...props} />;
+      case "seo":
+        return <SeoSection {...props} />;
       case "leads":
         return <WaitlistLeads />;
       case "broadcast":

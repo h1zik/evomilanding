@@ -8,6 +8,7 @@ import { getDatabaseHost, initDatabase, pool } from "./db.js";
 import { ensureUploadsDir, resolveUploadsDir } from "./uploadPaths.js";
 import { attachOfficialRoute, SPA_FALLBACK_PATTERN } from "./officialRoute.js";
 import { attachBroadcastRoute } from "./broadcastRoute.js";
+import { injectSeo } from "./seoHead.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
@@ -17,9 +18,41 @@ const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 ensureUploadsDir(uploadsDir);
 
 const app = express();
+app.set("trust proxy", true);
 app.use(cors());
 app.use(express.json({ limit: "15mb" }));
 app.use("/uploads", express.static(uploadsDir));
+
+// Cache konten untuk injeksi SEO (hindari query DB tiap page load). Di-invalidate saat PUT /api/content.
+let contentCache: { data: unknown; at: number } | null = null;
+const CONTENT_TTL_MS = 30_000;
+
+function readFallbackContent(): unknown {
+  for (const p of [path.join(rootDir, "dist", "content.json"), path.join(rootDir, "public", "content.json")]) {
+    try {
+      if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, "utf8"));
+    } catch {
+      /* abaikan */
+    }
+  }
+  return {};
+}
+
+async function getSiteContent(): Promise<unknown> {
+  if (contentCache && Date.now() - contentCache.at < CONTENT_TTL_MS) {
+    return contentCache.data;
+  }
+  try {
+    const { rows } = await pool.query(`SELECT data FROM site_content WHERE id = 'main'`);
+    const data = rows[0]?.data ?? readFallbackContent();
+    contentCache = { data, at: Date.now() };
+    return data;
+  } catch {
+    const data = readFallbackContent();
+    contentCache = { data, at: Date.now() };
+    return data;
+  }
+}
 
 app.get("/api/health", async (_req, res) => {
   try {
@@ -76,6 +109,7 @@ app.put("/api/content", async (req, res) => {
        SET data = EXCLUDED.data, updated_at = NOW()`,
       [JSON.stringify(data)],
     );
+    contentCache = null; // paksa refresh injeksi SEO dengan konten terbaru
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({
@@ -179,10 +213,34 @@ function attachFrontend() {
     return;
   }
   app.use(express.static(distDir, { index: false }));
-  app.get(SPA_FALLBACK_PATTERN, (_req, res) => {
-    res.sendFile(path.join(distDir, "index.html"));
+
+  const indexPath = path.join(distDir, "index.html");
+  let rawIndexHtml = "";
+  try {
+    rawIndexHtml = fs.readFileSync(indexPath, "utf8");
+  } catch {
+    console.warn("[api] Gagal membaca dist/index.html");
+  }
+
+  app.get(SPA_FALLBACK_PATTERN, async (req, res) => {
+    if (!rawIndexHtml) {
+      res.sendFile(indexPath);
+      return;
+    }
+    try {
+      const content = await getSiteContent();
+      const origin = `${req.protocol}://${req.get("host")}`;
+      const html = injectSeo(rawIndexHtml, content as Record<string, unknown>, {
+        origin,
+        path: req.path,
+      });
+      res.type("html").send(html);
+    } catch (err) {
+      console.error("[api] Injeksi SEO gagal, serve HTML mentah:", err);
+      res.type("html").send(rawIndexHtml);
+    }
   });
-  console.log("[api] Serving frontend from dist/");
+  console.log("[api] Serving frontend from dist/ (dengan injeksi SEO)");
 }
 
 app.post("/api/upload", async (req, res) => {
@@ -215,6 +273,32 @@ app.post("/api/upload", async (req, res) => {
   } catch (err) {
     console.error("[api] Upload error:", err);
     res.status(400).json({ error: "Upload gagal" });
+  }
+});
+
+// Daftar gambar yang sudah diupload — untuk galeri "pilih gambar eksisting" di admin.
+app.get("/api/uploads", (_req, res) => {
+  try {
+    const exts = new Set([".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"]);
+    const files = fs
+      .readdirSync(uploadsDir)
+      .filter((name) => exts.has(path.extname(name).toLowerCase()))
+      .map((name) => {
+        let mtime = 0;
+        try {
+          mtime = fs.statSync(path.join(uploadsDir, name)).mtimeMs;
+        } catch {
+          /* abaikan */
+        }
+        return { url: `/uploads/${name}`, name, mtime };
+      })
+      .sort((a, b) => b.mtime - a.mtime)
+      .map(({ url, name }) => ({ url, name }));
+    res.json(files);
+  } catch (err) {
+    res.status(500).json({
+      error: err instanceof Error ? err.message : "Gagal membaca galeri",
+    });
   }
 });
 

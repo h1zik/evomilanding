@@ -106,10 +106,22 @@ export interface LandingContent {
     brandLogoUrl: string;
   };
   site: {
-    /** Judul tab browser */
+    /** Judul tab browser + <title> + og:title */
     pageTitle: string;
     /** URL favicon (upload PNG/SVG/ICO) */
     faviconUrl: string;
+    /** Meta description + og:description (150–160 karakter ideal) */
+    metaDescription?: string;
+    /** Gambar preview saat link di-share (og:image / twitter:image). Rasio 1.91:1, mis. 1200×630 */
+    ogImageUrl?: string;
+    /** URL canonical situs, mis. https://evomi.id. Kosong = server pakai host request */
+    siteUrl?: string;
+    /** Meta Pixel ID (Facebook/Instagram Ads) — kosong = pixel tidak dipasang */
+    metaPixelId?: string;
+    /** Google Tag ID untuk Google Ads / GA4, mis. G-XXXX atau AW-XXXX — kosong = tidak dipasang */
+    googleTagId?: string;
+    /** Blokir mesin pencari (noindex). Untuk staging. Default false = boleh diindeks */
+    blockSearchEngines?: boolean;
   };
   hero: {
     counterLabel: string;
