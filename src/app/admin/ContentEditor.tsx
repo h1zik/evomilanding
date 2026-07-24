@@ -15,6 +15,7 @@ import {
 import { BrandLogoUpload } from "./components/BrandLogoUpload";
 import { ImageUploadField } from "./components/ImageUploadField";
 import { DecorationCanvasEditor } from "./components/DecorationCanvasEditor";
+import { Switch } from "../components/ui/switch";
 
 type PatchFn = (updater: (prev: LandingContent) => LandingContent) => void;
 
@@ -716,6 +717,101 @@ export function TestimonialsSection({ draft, patch }: EditorProps) {
             <Field label="Isi quote" value={card.text} onChange={(v) => patch((c) => ({ ...c, testimonials: { ...c.testimonials, cards: c.testimonials.cards.map((x) => (x.id === card.id ? { ...x, text: v } : x)) } }))} multiline />
           </CardShell>
         ))}
+      </div>
+    </div>
+  );
+}
+
+export function SeoSection({ draft, patch, patchImage }: EditorProps) {
+  const site = { ...defaultContent.site, ...draft.site };
+  const patchSite = (partial: Partial<typeof site>) =>
+    patch((c) => ({ ...c, site: { ...defaultContent.site, ...c.site, ...partial } }));
+
+  const descLen = (site.metaDescription ?? "").length;
+  const titleLen = (site.pageTitle ?? "").length;
+
+  return (
+    <div>
+      <SectionHeader
+        title="SEO & Iklan"
+        description="Pengaturan agar website tampil bagus di Google, saat link di-share (IG/FB/WhatsApp), dan siap dipasangi tracking iklan. Berlaku di versi produksi (Railway)."
+      />
+      <div className="space-y-5">
+        <FieldGroup title="Judul & deskripsi (Google & preview share)">
+          <Field
+            label="Judul halaman (title)"
+            value={site.pageTitle ?? ""}
+            onChange={(v) => patchSite({ pageTitle: v })}
+            hint={`Dipakai di tab browser, hasil Google, dan og:title. Ideal 50–60 karakter. Saat ini: ${titleLen}`}
+          />
+          <Field
+            label="Meta description"
+            value={site.metaDescription ?? ""}
+            onChange={(v) => patchSite({ metaDescription: v })}
+            multiline
+            hint={`Ringkasan di hasil Google & preview share. Ideal 150–160 karakter. Saat ini: ${descLen}`}
+          />
+        </FieldGroup>
+
+        <FieldGroup title="Gambar preview saat link di-share (OG image)">
+          <p className="text-sm text-black/55 mb-1">
+            Gambar yang muncul saat link evomi.id dibagikan di Instagram, Facebook, WhatsApp, dll.
+            Disarankan rasio 1.91:1 (mis. 1200×630 px). Bisa upload baru atau pilih dari galeri.
+          </p>
+          <ImageUploadField
+            label="OG image"
+            imageUrl={site.ogImageUrl ?? ""}
+            alt="Preview share evomi.id"
+            uploadPrefix="og"
+            allowLibrary
+            onChange={(url) => patchImage((c) => ({ ...c, site: { ...defaultContent.site, ...c.site, ogImageUrl: url } }))}
+            previewClassName="w-full aspect-[1.91/1] max-h-56 rounded-xl object-cover"
+          />
+        </FieldGroup>
+
+        <FieldGroup title="Alamat situs">
+          <Field
+            label="URL situs (canonical)"
+            value={site.siteUrl ?? ""}
+            onChange={(v) => patchSite({ siteUrl: v })}
+            hint="Contoh: https://evomi.id — dipakai untuk canonical, og:url, dan schema. Kosongkan untuk deteksi otomatis dari domain."
+          />
+        </FieldGroup>
+
+        <FieldGroup title="Tracking iklan (pixel)">
+          <p className="text-sm text-black/55 mb-1">
+            Untuk mengukur konversi (pendaftar dari iklan) & retargeting. Kosongkan jika belum dipasang —
+            tidak ada script yang dimuat kalau kosong.
+          </p>
+          <Field
+            label="Meta Pixel ID (Instagram / Facebook Ads)"
+            value={site.metaPixelId ?? ""}
+            onChange={(v) => patchSite({ metaPixelId: v })}
+            hint="Angka ID pixel dari Meta Events Manager, mis. 1234567890"
+          />
+          <Field
+            label="Google Tag ID (Google Ads / GA4)"
+            value={site.googleTagId ?? ""}
+            onChange={(v) => patchSite({ googleTagId: v })}
+            hint="Mis. G-XXXXXXX (GA4) atau AW-XXXXXXXXX (Google Ads)"
+          />
+        </FieldGroup>
+
+        <FieldGroup title="Indexing mesin pencari">
+          <div className="flex items-start justify-between gap-4 rounded-xl border border-black/10 bg-white p-4">
+            <div>
+              <p className="text-sm font-medium text-black/80">Blokir mesin pencari (noindex)</p>
+              <p className="text-xs text-black/50 mt-0.5">
+                Aktifkan hanya saat masih uji coba/staging. Untuk website yang diiklankan & ingin muncul di
+                Google, biarkan <strong>mati</strong>.
+              </p>
+            </div>
+            <Switch
+              checked={!!site.blockSearchEngines}
+              onCheckedChange={(v) => patchSite({ blockSearchEngines: v })}
+            />
+          </div>
+        </FieldGroup>
       </div>
     </div>
   );

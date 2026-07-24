@@ -1,10 +1,11 @@
 import { useRef, useState } from "react";
-import { ImagePlus, Loader2, Trash2 } from "lucide-react";
+import { ImagePlus, Images, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { uploadImage } from "@/content/imageUpload";
 import { MAX_UPLOAD_MB } from "@/content/uploadConfig";
 import { Button } from "../../components/ui/button";
 import { Label } from "../../components/ui/label";
+import { ImageLibraryPicker } from "./ImageLibraryPicker";
 
 export function ImageUploadField({
   label,
@@ -15,6 +16,7 @@ export function ImageUploadField({
   onChange,
   previewClassName = "w-full aspect-[4/3] max-h-48",
   emptyPlaceholder,
+  allowLibrary = false,
 }: {
   label: string;
   hint?: string;
@@ -24,9 +26,12 @@ export function ImageUploadField({
   onChange: (url: string) => void;
   previewClassName?: string;
   emptyPlaceholder?: React.ReactNode;
+  /** Tampilkan tombol "Pilih dari galeri" gambar yang sudah diupload */
+  allowLibrary?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
 
   async function handleFile(file: File) {
     setUploading(true);
@@ -74,6 +79,18 @@ export function ImageUploadField({
           )}
           {uploading ? "Mengupload..." : imageUrl ? "Ganti gambar" : "Upload gambar"}
         </Button>
+        {allowLibrary && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={uploading}
+            onClick={() => setLibraryOpen(true)}
+          >
+            <Images className="size-4" />
+            Pilih dari galeri
+          </Button>
+        )}
         {imageUrl && (
           <Button
             type="button"
@@ -102,6 +119,18 @@ export function ImageUploadField({
           if (file) handleFile(file);
         }}
       />
+
+      {allowLibrary && (
+        <ImageLibraryPicker
+          open={libraryOpen}
+          onOpenChange={setLibraryOpen}
+          currentUrl={imageUrl}
+          onSelect={(url) => {
+            onChange(url);
+            toast.success("Gambar dipilih — simpan perubahan untuk menerapkan");
+          }}
+        />
+      )}
     </div>
   );
 }

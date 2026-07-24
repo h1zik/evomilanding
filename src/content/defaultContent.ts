@@ -8,6 +8,13 @@ export const defaultContent: LandingContent = {
   site: {
     pageTitle: "evomi.id — Join the Waitlist",
     faviconUrl: "",
+    metaDescription:
+      "Parfum Gen Z Indonesia — setiap versi dari aku. Gabung waitlist EVOMI, dapatkan diskon early bird & jadi yang pertama tahu saat launch.",
+    ogImageUrl: "",
+    siteUrl: "",
+    metaPixelId: "",
+    googleTagId: "",
+    blockSearchEngines: false,
   },
   hero: {
     counterLabel: "LIVE",
