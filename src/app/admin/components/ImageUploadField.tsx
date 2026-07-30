@@ -14,6 +14,7 @@ export function ImageUploadField({
   alt,
   uploadPrefix,
   onChange,
+  onUploadingChange,
   previewClassName = "w-full aspect-[4/3] max-h-48",
   emptyPlaceholder,
   allowLibrary = false,
@@ -24,6 +25,8 @@ export function ImageUploadField({
   alt: string;
   uploadPrefix: string;
   onChange: (url: string) => void;
+  /** Beri tahu parent agar aksi lain bisa ditahan selama file sedang diupload. */
+  onUploadingChange?: (uploading: boolean) => void;
   previewClassName?: string;
   emptyPlaceholder?: React.ReactNode;
   /** Tampilkan tombol "Pilih dari galeri" gambar yang sudah diupload */
@@ -35,14 +38,16 @@ export function ImageUploadField({
 
   async function handleFile(file: File) {
     setUploading(true);
+    onUploadingChange?.(true);
     try {
       const url = await uploadImage(file, uploadPrefix);
       onChange(url);
-      toast.success("Gambar terupload — menyimpan ke server…");
+      toast.success("Gambar berhasil diupload.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload gagal");
     } finally {
       setUploading(false);
+      onUploadingChange?.(false);
       if (inputRef.current) inputRef.current.value = "";
     }
   }
@@ -100,7 +105,7 @@ export function ImageUploadField({
             disabled={uploading}
             onClick={() => {
               onChange("");
-              toast.info("Gambar dihapus — simpan perubahan untuk menerapkan");
+              toast.info("Gambar dihapus dari pilihan.");
             }}
           >
             <Trash2 className="size-4" />
@@ -127,7 +132,7 @@ export function ImageUploadField({
           currentUrl={imageUrl}
           onSelect={(url) => {
             onChange(url);
-            toast.success("Gambar dipilih — simpan perubahan untuk menerapkan");
+            toast.success("Gambar dipilih dari galeri.");
           }}
         />
       )}

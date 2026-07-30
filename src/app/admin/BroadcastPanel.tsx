@@ -42,6 +42,7 @@ import {
   AlertDialogTitle,
 } from "../components/ui/alert-dialog";
 import { SectionHeader, StatCard } from "./components/AdminFields";
+import { ImageUploadField } from "./components/ImageUploadField";
 
 const DRAFT_KEY = "evomi-broadcast-draft";
 
@@ -72,6 +73,7 @@ export function BroadcastPanel() {
 
   const [sending, setSending] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const load = useCallback(async () => {
@@ -121,7 +123,11 @@ export function BroadcastPanel() {
   const recipientCount = sendToAll ? (summary?.valid ?? 0) : selectedIds.length;
   const previewName = leads[0]?.name ?? "Kak Budi";
   const canSend =
-    message.trim().length > 0 && recipientCount > 0 && !sending && status?.configured;
+    message.trim().length > 0 &&
+    recipientCount > 0 &&
+    !sending &&
+    !imageUploading &&
+    status?.configured;
 
   function toggleLead(id: string) {
     setSelectedIds((prev) =>
@@ -290,21 +296,18 @@ export function BroadcastPanel() {
           </div>
         )}
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label className="text-sm font-medium text-black/80">
-              URL gambar (opsional)
-            </Label>
-            <Input
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://evomi.id/uploads/promo.jpg"
-              className="bg-white"
-            />
-            <p className="text-xs text-black/45">
-              Harus URL publik — Fonnte mengunduh gambarnya, jadi link localhost tidak bisa.
-            </p>
-          </div>
+        <div className="grid sm:grid-cols-2 gap-4 items-start">
+          <ImageUploadField
+            label="Gambar broadcast (opsional)"
+            hint="Upload PNG, JPG, WebP, atau SVG (maks. 10 MB). Gambar langsung tersimpan di server."
+            imageUrl={imageUrl}
+            alt="Preview gambar broadcast"
+            uploadPrefix="broadcast"
+            onChange={setImageUrl}
+            onUploadingChange={setImageUploading}
+            previewClassName="w-full aspect-video max-h-56"
+            allowLibrary
+          />
           <div className="space-y-1.5">
             <Label className="text-sm font-medium text-black/80">Jeda antar pesan (detik)</Label>
             <Input
@@ -438,7 +441,7 @@ export function BroadcastPanel() {
           <Button
             variant="outline"
             onClick={handleTest}
-            disabled={testing || !status?.configured}
+            disabled={testing || imageUploading || !status?.configured}
             className="shrink-0"
           >
             {testing ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
@@ -488,6 +491,13 @@ export function BroadcastPanel() {
                 <p className="text-sm text-black/70 whitespace-pre-wrap line-clamp-3 break-words">
                   {c.message}
                 </p>
+                {c.imageUrl && (
+                  <img
+                    src={c.imageUrl}
+                    alt="Gambar broadcast"
+                    className="h-20 max-w-40 rounded-lg border border-black/8 object-cover"
+                  />
+                )}
                 {c.failures.length > 0 && (
                   <p className="text-xs text-black/45">
                     Gagal: {c.failures.slice(0, 3).map((f) => f.phone).join(", ")}
@@ -511,6 +521,13 @@ export function BroadcastPanel() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="rounded-xl bg-black/[0.03] p-3 max-h-40 overflow-y-auto">
+            {imageUrl && (
+              <img
+                src={imageUrl}
+                alt="Gambar yang akan dikirim"
+                className="mb-3 max-h-28 w-full rounded-lg object-cover"
+              />
+            )}
             <p className="text-sm whitespace-pre-wrap break-words">
               {renderPreview(message, previewName)}
             </p>
