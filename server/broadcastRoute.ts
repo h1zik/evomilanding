@@ -40,6 +40,31 @@ function createId() {
   return `bc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+/** Fonnte harus menerima URL absolut agar bisa mengunduh gambar dari server. */
+function resolvePublicImageUrl(req: Request, rawUrl?: string): string | undefined {
+  const value = rawUrl?.trim();
+  if (!value) return undefined;
+
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    if (!value.startsWith("/")) {
+      throw new Error("URL gambar tidak valid");
+    }
+    const host = req.get("host");
+    if (!host) {
+      throw new Error("Domain publik server tidak tersedia");
+    }
+    url = new URL(value, `${req.protocol}://${host}`);
+  }
+
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error("URL gambar harus memakai HTTP atau HTTPS");
+  }
+  return url.toString();
+}
+
 interface WaitlistRow {
   id: string;
   name: string;
@@ -138,6 +163,16 @@ export function attachBroadcastRoute(app: Express) {
       return;
     }
 
+    let publicImageUrl: string | undefined;
+    try {
+      publicImageUrl = resolvePublicImageUrl(req, imageUrl);
+    } catch (err) {
+      res.status(400).json({
+        error: err instanceof Error ? err.message : "URL gambar tidak valid",
+      });
+      return;
+    }
+
     try {
       // Mode tes — kirim ke satu nomor saja, tidak dicatat sebagai campaign
       if (testNumber) {
@@ -150,7 +185,7 @@ export function attachBroadcastRoute(app: Express) {
           token,
           [{ phone, name: "Admin" }],
           text,
-          { imageUrl, delay },
+          { imageUrl: publicImageUrl, delay },
         );
         res.json({
           test: true,
@@ -187,7 +222,10 @@ export function attachBroadcastRoute(app: Express) {
         return;
       }
 
-      const summary = await sendBroadcast(token, targets, text, { imageUrl, delay });
+      const summary = await sendBroadcast(token, targets, text, {
+        imageUrl: publicImageUrl,
+        delay,
+      });
 
       const failures = [
         ...summary.failed,
@@ -214,7 +252,7 @@ export function attachBroadcastRoute(app: Express) {
         [
           id,
           text,
-          imageUrl?.trim() || null,
+          publicImageUrl ?? null,
           targets.length + invalid.length,
           summary.success.length,
           failures.length,
