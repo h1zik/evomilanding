@@ -136,6 +136,62 @@ export function NumberField({
   );
 }
 
+export function SliderField({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step = 1,
+  suffix = "",
+  hint,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  min: number;
+  max: number;
+  step?: number;
+  suffix?: string;
+  hint?: string;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <Label className="text-sm font-medium text-black/80">{label}</Label>
+        <span className="text-xs tabular-nums text-black/50">
+          {value}
+          {suffix}
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-full accent-[#1172ba]"
+        />
+        <Input
+          type="number"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => {
+            const n = Number(e.target.value);
+            if (!Number.isNaN(n)) onChange(Math.min(max, Math.max(min, n)));
+          }}
+          className="w-20 bg-white"
+        />
+      </div>
+      {hint && <p className="text-xs text-black/45">{hint}</p>}
+    </div>
+  );
+}
+
 export function CardShell({
   title,
   subtitle,

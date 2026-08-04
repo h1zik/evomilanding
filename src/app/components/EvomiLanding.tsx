@@ -695,7 +695,7 @@ export function EvomiLanding() {
             return null;
           })()}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 w-full">
+          <div className="flex flex-wrap justify-center gap-5 md:gap-6 w-full">
             {story.cards.map((c, i) => {
               const Icon = STORY_ICONS[c.icon] ?? Heart;
               const titleColor = c.titleColor || "#1172ba";
@@ -707,7 +707,7 @@ export function EvomiLanding() {
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.08 }}
                   whileHover={{ y: -4 }}
-                  className="bg-white rounded-2xl p-6 md:p-7 border-[3px] border-black shadow-[5px_5px_0_0_#000]"
+                  className="bg-white rounded-2xl p-6 md:p-7 border-[3px] border-black shadow-[5px_5px_0_0_#000] w-full md:w-[calc((100%-3rem)/3)]"
                 >
                   <div
                     className="w-14 h-14 rounded-full flex items-center justify-center mb-5"
@@ -761,7 +761,10 @@ export function EvomiLanding() {
                     <img
                       src={s.imageUrl}
                       alt={s.name}
-                      className="absolute inset-0 w-full h-full object-cover translate-y-5"
+                      className="absolute inset-0 w-full h-full object-cover"
+                      style={{
+                        transform: `translateY(${s.imageOffsetY ?? 5}%) scale(${(s.imageScale ?? 100) / 100})`,
+                      }}
                     />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center text-[140px] opacity-60">{s.emoji}</div>
