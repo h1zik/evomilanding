@@ -41,6 +41,10 @@ export interface ScentCard {
   descColor: string;
   emoji: string;
   imageUrl: string;
+  /** Skala gambar produk dalam persen (100 = ukuran normal) */
+  imageScale?: number;
+  /** Geser gambar produk vertikal, persen tinggi area (+ = ke bawah) */
+  imageOffsetY?: number;
   /** Gambar pojok kanan bawah (ganti bintang berputar) */
   stickerImageUrl: string;
   /** Warna bintang jika sticker kosong */

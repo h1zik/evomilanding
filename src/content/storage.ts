@@ -183,6 +183,8 @@ function normalizeContent(content: LandingContent): LandingContent {
         return {
           ...card,
           imageUrl: card.imageUrl ?? "",
+          imageScale: card.imageScale ?? def?.imageScale ?? 100,
+          imageOffsetY: card.imageOffsetY ?? def?.imageOffsetY ?? 5,
           stickerImageUrl: card.stickerImageUrl ?? "",
           nameColor: card.nameColor ?? def?.nameColor ?? "#000000",
           subColor: card.subColor ?? def?.subColor ?? card.color ?? "#1172ba",

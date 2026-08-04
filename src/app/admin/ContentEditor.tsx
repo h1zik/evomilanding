@@ -11,6 +11,7 @@ import {
   FieldGroup,
   NumberField,
   SectionHeader,
+  SliderField,
 } from "./components/AdminFields";
 import { BrandLogoUpload } from "./components/BrandLogoUpload";
 import { ImageUploadField } from "./components/ImageUploadField";
@@ -575,7 +576,7 @@ export function ScentsSection({ draft, patch, patchImage }: EditorProps) {
 
       <div className="flex justify-between items-center mt-6 mb-4">
         <h3 className="font-semibold text-black/70">Card aroma ({draft.scents.cards.length})</h3>
-        <Button size="sm" onClick={() => patch((c) => ({ ...c, scents: { ...c.scents, cards: [...c.scents.cards, { id: createId("scent"), name: "Nama", sub: "Subtitle", color: "#1172ba", soft: "#ffffff", nameColor: "#000000", subColor: "#1172ba", vibeColor: "#4a4a4a", descColor: "#333333", emoji: "✨", imageUrl: "", stickerImageUrl: "", stickerColor: "#FFD521", vibe: "vibe...", desc: "deskripsi..." } satisfies ScentCard] } }))}>
+        <Button size="sm" onClick={() => patch((c) => ({ ...c, scents: { ...c.scents, cards: [...c.scents.cards, { id: createId("scent"), name: "Nama", sub: "Subtitle", color: "#1172ba", soft: "#ffffff", nameColor: "#000000", subColor: "#1172ba", vibeColor: "#4a4a4a", descColor: "#333333", emoji: "✨", imageUrl: "", imageScale: 100, imageOffsetY: 5, stickerImageUrl: "", stickerColor: "#FFD521", vibe: "vibe...", desc: "deskripsi..." } satisfies ScentCard] } }))}>
           <Plus className="size-4" /> Tambah aroma
         </Button>
       </div>
@@ -591,6 +592,45 @@ export function ScentsSection({ draft, patch, patchImage }: EditorProps) {
               onChange={(url) => patchImage((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, imageUrl: url } : x)) } }))}
               previewClassName="w-full aspect-[3/4] max-h-56 rounded-xl"
             />
+            {card.imageUrl ? (
+              <FieldGroup title="Ukuran & posisi foto produk">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div
+                    className="w-32 shrink-0 aspect-[3/4] relative overflow-hidden rounded-xl border-2 border-black/10"
+                    style={{ backgroundColor: card.color }}
+                  >
+                    <img
+                      src={card.imageUrl}
+                      alt={card.name}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      style={{
+                        transform: `translateY(${card.imageOffsetY ?? 5}%) scale(${(card.imageScale ?? 100) / 100})`,
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1 space-y-4">
+                    <SliderField
+                      label="Ukuran gambar"
+                      value={card.imageScale ?? 100}
+                      min={50}
+                      max={200}
+                      suffix="%"
+                      hint="100% = memenuhi area card. Kecilkan agar produk terlihat utuh, besarkan untuk zoom."
+                      onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, imageScale: v } : x)) } }))}
+                    />
+                    <SliderField
+                      label="Geser vertikal"
+                      value={card.imageOffsetY ?? 5}
+                      min={-50}
+                      max={50}
+                      suffix="%"
+                      hint="Negatif = naik, positif = turun."
+                      onChange={(v) => patch((c) => ({ ...c, scents: { ...c.scents, cards: c.scents.cards.map((x) => (x.id === card.id ? { ...x, imageOffsetY: v } : x)) } }))}
+                    />
+                  </div>
+                </div>
+              </FieldGroup>
+            ) : null}
             <ImageUploadField
               label="Stiker pojok (ganti bintang berputar)"
               hint="PNG transparan disarankan. Kosongkan untuk pakai bintang kuning."
