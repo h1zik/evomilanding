@@ -27,8 +27,9 @@ statusnya "Fonnte belum dikonfigurasi".
 
 - **Isi pesan** — mendukung format WhatsApp (`*tebal*`, `_miring_`, `~coret~`).
 - **`{nama}`** — diganti otomatis dengan nama pendaftar. `{name}` juga bisa.
-- **URL gambar** — opsional, harus URL publik (Fonnte yang mengunduh gambarnya,
-  jadi `http://localhost:...` tidak akan jalan; pakai domain produksi).
+- **Gambar broadcast** — opsional. Upload PNG, JPG, WebP, atau SVG langsung dari
+  komputer, atau pilih gambar yang sudah ada di galeri. File tersimpan di folder
+  upload server dan URL publiknya dikirim otomatis ke Fonnte.
 - **Jeda antar pesan** — format `2-10` (detik, acak). Jangan terlalu cepat supaya
   nomor tidak kena blokir WhatsApp.
 - **Penerima** — "Semua pendaftar" atau "Pilih manual" (centang satu per satu).
