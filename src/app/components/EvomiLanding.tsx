@@ -25,6 +25,14 @@ const STORY_ICONS = {
   sparkles: Sparkles,
 } satisfies Record<StoryIcon, typeof Heart>;
 
+// Lebar kartu story mengikuti jumlahnya (gap desktop = 1.5rem): 1 kartu dibatasi
+// agar tidak terlihat melar, 2 kartu setengah lebar, 3 atau lebih sepertiga.
+const STORY_CARD_WIDTHS: Record<number, string> = {
+  1: "md:w-full md:max-w-2xl",
+  2: "md:w-[calc(50%_-_0.75rem)]",
+  3: "md:w-[calc(33.3333%_-_1rem)]",
+};
+
 
 function Marquee({ items }: { items: { id: string; text: string; color?: string }[] }) {
   return (
@@ -707,7 +715,10 @@ export function EvomiLanding() {
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.08 }}
                   whileHover={{ y: -4 }}
-                  className="bg-white rounded-2xl p-6 md:p-7 border-[3px] border-black shadow-[5px_5px_0_0_#000] w-full md:w-[calc((100%-3rem)/3)]"
+                  className={`bg-white rounded-2xl p-6 md:p-7 border-[3px] border-black shadow-[5px_5px_0_0_#000] w-full ${
+                    STORY_CARD_WIDTHS[Math.min(story.cards.length, 3)] ??
+                    "md:w-[calc(33.3333%_-_1rem)]"
+                  }`}
                 >
                   <div
                     className="w-14 h-14 rounded-full flex items-center justify-center mb-5"
