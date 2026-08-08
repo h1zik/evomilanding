@@ -29,8 +29,8 @@ const STORY_ICONS = {
 // agar tidak terlihat melar, 2 kartu setengah lebar, 3 atau lebih sepertiga.
 const STORY_CARD_WIDTHS: Record<number, string> = {
   1: "md:w-full md:max-w-2xl",
-  2: "md:w-[calc((100%-1.5rem)/2)]",
-  3: "md:w-[calc((100%-3rem)/3)]",
+  2: "md:w-[calc(50%_-_0.75rem)]",
+  3: "md:w-[calc(33.3333%_-_1rem)]",
 };
 
 
@@ -717,7 +717,7 @@ export function EvomiLanding() {
                   whileHover={{ y: -4 }}
                   className={`bg-white rounded-2xl p-6 md:p-7 border-[3px] border-black shadow-[5px_5px_0_0_#000] w-full ${
                     STORY_CARD_WIDTHS[Math.min(story.cards.length, 3)] ??
-                    "md:w-[calc((100%-3rem)/3)]"
+                    "md:w-[calc(33.3333%_-_1rem)]"
                   }`}
                 >
                   <div
