@@ -25,6 +25,14 @@ const STORY_ICONS = {
   sparkles: Sparkles,
 } satisfies Record<StoryIcon, typeof Heart>;
 
+// Kartu story melebar mengikuti jumlahnya: 1 kartu dibatasi lebarnya agar tidak
+// terlihat melar, 2 kartu jadi setengah lebar, 3 atau lebih tetap 3 kolom.
+const STORY_GRID_COLS: Record<number, string> = {
+  1: "md:grid-cols-1 md:max-w-2xl md:mx-auto",
+  2: "md:grid-cols-2",
+  3: "md:grid-cols-3",
+};
+
 
 function Marquee({ items }: { items: { id: string; text: string; color?: string }[] }) {
   return (
@@ -695,7 +703,11 @@ export function EvomiLanding() {
             return null;
           })()}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 w-full">
+          <div
+            className={`grid grid-cols-1 gap-5 md:gap-6 w-full ${
+              STORY_GRID_COLS[Math.min(story.cards.length, 3)] ?? "md:grid-cols-3"
+            }`}
+          >
             {story.cards.map((c, i) => {
               const Icon = STORY_ICONS[c.icon] ?? Heart;
               const titleColor = c.titleColor || "#1172ba";
