@@ -1,9 +1,18 @@
-import type { CounterAvatarIconType, LandingContent, ScentCard, StoryIcon, TestimonialCard } from "@/content/types";
+import type {
+  CounterAvatarIconType,
+  HeroShowcase,
+  LandingContent,
+  ScentCard,
+  StoryIcon,
+  TestimonialCard,
+} from "@/content/types";
 import { RichTextEditor } from "./components/RichTextEditor";
 import { createId } from "@/content/storage";
 import { defaultContent } from "@/content/defaultContent";
 import { Button } from "../components/ui/button";
-import { Plus } from "lucide-react";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Plus, Trash2 } from "lucide-react";
 import {
   CardShell,
   ColorField,
@@ -25,6 +34,306 @@ type EditorProps = {
   patch: PatchFn;
   patchImage: PatchFn;
 };
+
+function HeroShowcaseFields({ draft, patch, patchImage }: EditorProps) {
+  const showcase = { ...defaultContent.hero.showcase, ...(draft.hero.showcase ?? {}) };
+  const setShowcase = (partial: Partial<HeroShowcase>) =>
+    patch((c) => ({
+      ...c,
+      hero: {
+        ...c.hero,
+        showcase: { ...defaultContent.hero.showcase, ...(c.hero.showcase ?? {}), ...partial },
+      },
+    }));
+
+  const mobileRatio = Math.min(showcase.frameRatio > 0 ? showcase.frameRatio : 2.9, 1.7);
+
+  return (
+    <FieldGroup title="Showcase produk & harga (di bawah judul)">
+      <div className="flex items-start justify-between gap-4 rounded-xl border border-black/10 bg-white p-4">
+        <div>
+          <p className="text-sm font-medium text-black/80">Tampilkan blok ini</p>
+          <p className="text-xs text-black/50 mt-0.5">
+            Gambar produk di kiri + harga coret, harga akhir, dan hitung mundur di kanan.
+          </p>
+        </div>
+        <Switch
+          checked={showcase.enabled}
+          onCheckedChange={(v) => setShowcase({ enabled: v })}
+        />
+      </div>
+
+      {showcase.enabled && (
+        <>
+          <ImageUploadField
+            label="Gambar produk"
+            hint="Gambar horizontal disarankan. Setelah upload, atur posisi & zoom di bawah."
+            imageUrl={showcase.imageUrl}
+            alt={showcase.imageAlt}
+            uploadPrefix="hero-showcase"
+            allowLibrary
+            onChange={(url) =>
+              patchImage((c) => ({
+                ...c,
+                hero: {
+                  ...c.hero,
+                  showcase: {
+                    ...defaultContent.hero.showcase,
+                    ...(c.hero.showcase ?? {}),
+                    imageUrl: url,
+                  },
+                },
+              }))
+            }
+            previewClassName="w-full max-h-40 object-contain bg-[#fafafa]"
+          />
+
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-black/80">Posisi & ukuran gambar</p>
+            {/* Beri ruang di atas: gambar boleh menyembul melewati border atas */}
+            <div
+              className="relative w-full mt-12 rounded-2xl border-4 border-black"
+              style={{ aspectRatio: showcase.frameRatio || 2.9, backgroundColor: showcase.frameColor }}
+            >
+              {showcase.imageUrl ? (
+                <div
+                  className="absolute inset-x-1 bottom-1 overflow-hidden rounded-b-xl pointer-events-none"
+                  style={{ top: "calc(-300% - 4px)" }}
+                >
+                  <div className="absolute inset-x-0 bottom-0" style={{ height: "calc(25% - 8px)" }}>
+                    <img
+                      src={showcase.imageUrl}
+                      alt={showcase.imageAlt}
+                      className="w-full h-full"
+                      style={{
+                        objectFit: showcase.imageFit,
+                        transform: `translate(${showcase.imageOffsetX}%, ${showcase.imageOffsetY}%) scale(${showcase.imageScale / 100})`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-white/85 text-sm">
+                  Belum ada gambar
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-black/45">
+              Pratinjau frame versi desktop. Bagian atas gambar sengaja menimpa border dan tidak
+              terpotong saat di-zoom — sisi kiri, kanan, dan bawah tetap rapi di dalam border. Di layar
+              HP rasio otomatis dibatasi jadi {mobileRatio.toFixed(1)} agar tidak terlalu pipih.
+            </p>
+
+            <SliderField
+              label="Geser kiri / kanan"
+              value={showcase.imageOffsetX}
+              min={-100}
+              max={100}
+              suffix="%"
+              hint="Negatif = geser ke kiri, positif = geser ke kanan."
+              onChange={(v) => setShowcase({ imageOffsetX: v })}
+            />
+            <SliderField
+              label="Geser atas / bawah"
+              value={showcase.imageOffsetY}
+              min={-100}
+              max={100}
+              suffix="%"
+              hint="Negatif = geser ke atas, positif = geser ke bawah."
+              onChange={(v) => setShowcase({ imageOffsetY: v })}
+            />
+            <SliderField
+              label="Zoom gambar"
+              value={showcase.imageScale}
+              min={50}
+              max={250}
+              suffix="%"
+              hint="Perbesar dulu kalau mau menggeser gambar tanpa muncul celah di frame."
+              onChange={(v) => setShowcase({ imageScale: v })}
+            />
+            <SliderField
+              label="Rasio frame (lebar ÷ tinggi)"
+              value={showcase.frameRatio}
+              min={1}
+              max={4}
+              step={0.1}
+              hint="2.9 = banner memanjang seperti desain. Makin kecil, makin tinggi framenya."
+              onChange={(v) => setShowcase({ frameRatio: v })}
+            />
+
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-black/80">Cara gambar mengisi frame</Label>
+              <div className="flex gap-2">
+                {(["cover", "contain"] as const).map((fit) => (
+                  <Button
+                    key={fit}
+                    type="button"
+                    size="sm"
+                    variant={showcase.imageFit === fit ? "default" : "outline"}
+                    onClick={() => setShowcase({ imageFit: fit })}
+                  >
+                    {fit === "cover" ? "Penuhi frame" : "Tampil utuh"}
+                  </Button>
+                ))}
+              </div>
+              <p className="text-xs text-black/45">
+                Penuhi frame = gambar dipotong agar rapat. Tampil utuh = gambar tidak terpotong.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <ColorField
+                label="Warna latar frame"
+                value={showcase.frameColor}
+                onChange={(v) => setShowcase({ frameColor: v })}
+              />
+              <Field
+                label="Teks alternatif gambar"
+                value={showcase.imageAlt}
+                onChange={(v) => setShowcase({ imageAlt: v })}
+                hint="Untuk aksesibilitas & SEO"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-2 border-t border-black/8">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-black/80">Harga coret</p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  setShowcase({
+                    strikePrices: [
+                      ...showcase.strikePrices,
+                      { id: createId("strike"), text: "Rp 0" },
+                    ],
+                  })
+                }
+              >
+                <Plus className="size-4" /> Tambah harga
+              </Button>
+            </div>
+            {showcase.strikePrices.length === 0 && (
+              <p className="text-sm text-black/45 italic py-3 text-center border border-dashed rounded-xl">
+                Belum ada harga coret.
+              </p>
+            )}
+            {showcase.strikePrices.map((price, i) => (
+              <div key={price.id} className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Field
+                    label={`Harga coret ${i + 1}`}
+                    value={price.text}
+                    onChange={(v) =>
+                      setShowcase({
+                        strikePrices: showcase.strikePrices.map((x) =>
+                          x.id === price.id ? { ...x, text: v } : x,
+                        ),
+                      })
+                    }
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 mb-0.5"
+                  onClick={() =>
+                    setShowcase({
+                      strikePrices: showcase.strikePrices.filter((x) => x.id !== price.id),
+                    })
+                  }
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </div>
+            ))}
+            <ColorField
+              label="Warna garis coret"
+              value={showcase.strikeLineColor}
+              onChange={(v) => setShowcase({ strikeLineColor: v })}
+            />
+            <RichTextEditor
+              label="Catatan di kanan harga coret"
+              value={showcase.note}
+              onChange={(v) => setShowcase({ note: v })}
+              note="Contoh: 1st Batch Disc. + Waiting list Disc."
+            />
+          </div>
+
+          <div className="space-y-3 pt-2 border-t border-black/8">
+            <p className="text-sm font-medium text-black/80">Harga akhir</p>
+            <Field
+              label="Harga akhir"
+              value={showcase.finalPrice}
+              onChange={(v) => setShowcase({ finalPrice: v })}
+              hint="Contoh: Rp 171.000. Kosongkan untuk menyembunyikan kotak harga."
+            />
+            <div className="grid sm:grid-cols-2 gap-4">
+              <ColorField
+                label="Warna kotak harga"
+                value={showcase.finalPriceBg}
+                onChange={(v) => setShowcase({ finalPriceBg: v })}
+              />
+              <ColorField
+                label="Warna teks harga"
+                value={showcase.finalPriceColor}
+                onChange={(v) => setShowcase({ finalPriceColor: v })}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-2 border-t border-black/8">
+            <p className="text-sm font-medium text-black/80">Badge diskon & hitung mundur</p>
+            <Field
+              label="Teks badge diskon"
+              value={showcase.discountBadge}
+              onChange={(v) => setShowcase({ discountBadge: v })}
+              hint="Contoh: 24% + 10% off"
+            />
+            <div className="grid sm:grid-cols-2 gap-4">
+              <ColorField
+                label="Warna badge"
+                value={showcase.discountBadgeBg}
+                onChange={(v) => setShowcase({ discountBadgeBg: v })}
+              />
+              <ColorField
+                label="Warna teks badge"
+                value={showcase.discountBadgeColor}
+                onChange={(v) => setShowcase({ discountBadgeColor: v })}
+              />
+            </div>
+            <div className="flex items-start justify-between gap-4 rounded-xl border border-black/10 bg-white p-4">
+              <div>
+                <p className="text-sm font-medium text-black/80">Tampilkan hitung mundur</p>
+                <p className="text-xs text-black/50 mt-0.5">Format hari:jam:menit:detik</p>
+              </div>
+              <Switch
+                checked={showcase.countdownEnabled}
+                onCheckedChange={(v) => setShowcase({ countdownEnabled: v })}
+              />
+            </div>
+            {showcase.countdownEnabled && (
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium text-black/80">Hitung mundur sampai</Label>
+                <Input
+                  type="datetime-local"
+                  value={showcase.countdownEndsAt}
+                  onChange={(e) => setShowcase({ countdownEndsAt: e.target.value })}
+                  className="bg-white"
+                />
+                <p className="text-xs text-black/45">
+                  Kosongkan untuk menampilkan 00:00:00:00. Waktu mengikuti zona waktu pengunjung.
+                </p>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </FieldGroup>
+  );
+}
 
 export function HeroSection({ draft, patch, patchImage }: EditorProps) {
   return (
@@ -230,6 +539,8 @@ export function HeroSection({ draft, patch, patchImage }: EditorProps) {
           />
           <Field label="Teks tombol CTA" value={draft.hero.ctaText} onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, ctaText: v } }))} />
         </FieldGroup>
+
+        <HeroShowcaseFields draft={draft} patch={patch} patchImage={patchImage} />
 
         <FieldGroup title="Maskot hero (baris karakter)">
           <p className="text-sm text-black/55 mb-3">

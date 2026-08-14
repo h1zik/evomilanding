@@ -7,7 +7,14 @@ import { useContent } from "@/content/ContentContext";
 import { fillTemplate, renderInline, renderRichText, stripRichText } from "@/content/renderInline";
 import { addSubmission, fetchWaitlistCount } from "@/content/waitlistStorage";
 import { BrandMark } from "./BrandMark";
-import type { CounterAvatar, CounterAvatarIconType, HeroDecoration, HeroMascot, StoryIcon } from "@/content/types";
+import type {
+  CounterAvatar,
+  CounterAvatarIconType,
+  HeroDecoration,
+  HeroMascot,
+  HeroShowcase,
+  StoryIcon,
+} from "@/content/types";
 import {
   Carousel,
   CarouselContent,
@@ -194,6 +201,184 @@ function HeroDecorationLayer({
           );
         })}
     </>
+  );
+}
+
+/** Sisa waktu (ms) sampai `endsAt`. String kosong / tanggal invalid = 0. */
+function remainingMs(endsAt: string): number {
+  if (!endsAt) return 0;
+  const target = new Date(endsAt).getTime();
+  if (Number.isNaN(target)) return 0;
+  return Math.max(0, target - Date.now());
+}
+
+function formatCountdown(ms: number): string {
+  const total = Math.floor(ms / 1000);
+  const days = Math.floor(total / 86400);
+  const hours = Math.floor((total % 86400) / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  return [days, hours, minutes, seconds].map((n) => String(n).padStart(2, "0")).join(":");
+}
+
+function HeroCountdown({ endsAt }: { endsAt: string }) {
+  const [ms, setMs] = useState(() => remainingMs(endsAt));
+
+  useEffect(() => {
+    setMs(remainingMs(endsAt));
+    if (!endsAt) return;
+    const id = setInterval(() => setMs(remainingMs(endsAt)), 1000);
+    return () => clearInterval(id);
+  }, [endsAt]);
+
+  return (
+    <span className="tabular-nums whitespace-nowrap">{formatCountdown(ms)}</span>
+  );
+}
+
+/** Harga coret dengan garis diagonal-lurus seperti desain */
+function StrikePrice({ text, lineColor }: { text: string; lineColor: string }) {
+  return (
+    <span className="relative inline-block leading-none whitespace-nowrap">
+      {text}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute left-[-3%] top-1/2 h-[3px] w-[106%] -translate-y-1/2 rounded-full"
+        style={{ backgroundColor: lineColor }}
+      />
+    </span>
+  );
+}
+
+/** Gambar produk + panel harga di hero */
+function HeroShowcaseBlock({ showcase }: { showcase: HeroShowcase }) {
+  const ratio = showcase.frameRatio > 0 ? showcase.frameRatio : 2.9;
+  // Frame terlalu pipih di layar kecil — batasi rasio di mobile.
+  const mobileRatio = Math.min(ratio, 1.7);
+  const strikes = showcase.strikePrices.filter((p) => p.text.trim());
+  const hasPrice = showcase.finalPrice.trim().length > 0;
+  const hasBadge = showcase.discountBadge.trim().length > 0 || showcase.countdownEnabled;
+
+  const imageLayer = showcase.imageUrl ? (
+    <img
+      src={showcase.imageUrl}
+      alt={showcase.imageAlt}
+      className="w-full h-full select-none"
+      style={{
+        objectFit: showcase.imageFit,
+        transform: `translate(${showcase.imageOffsetX}%, ${showcase.imageOffsetY}%) scale(${
+          showcase.imageScale / 100
+        })`,
+      }}
+    />
+  ) : (
+    <div className="w-full h-full flex items-center justify-center text-center text-white/85 text-sm px-6">
+      Upload gambar produk di admin
+    </div>
+  );
+
+  return (
+    <div className="mt-8 md:mt-10 w-full grid gap-5 md:gap-6 md:grid-cols-[1.6fr_1fr] md:items-center">
+      <div
+        className="relative w-full aspect-[var(--frame-ratio-mobile)] md:aspect-[var(--frame-ratio)]"
+        style={
+          {
+            "--frame-ratio": ratio,
+            "--frame-ratio-mobile": mobileRatio,
+          } as React.CSSProperties
+        }
+      >
+        {/* Lapisan paling bawah: latar + border penuh */}
+        <div
+          className="absolute inset-0 rounded-3xl border-4 border-black"
+          style={{ backgroundColor: showcase.frameColor }}
+        />
+        {/*
+         * Sisi atas dibiarkan terbuka supaya gambar menimpa border atas dan tidak pernah
+         * terpotong saat di-zoom, sementara kiri/kanan/bawah tetap dipotong tepat di dalam
+         * border — jadi border bawah & samping tetap tergambar di atas gambar. Kotak
+         * pemotong dibuat 4× tinggi frame ke atas; anak di dalamnya (25% tinggi − 8px)
+         * kembali seukuran area dalam frame supaya ukuran gambar tidak berubah.
+         */}
+        <div
+          className="absolute inset-x-1 bottom-1 z-10 overflow-hidden rounded-b-[20px] pointer-events-none"
+          style={{ top: "calc(-300% - 4px)" }}
+        >
+          <div className="absolute inset-x-0 bottom-0" style={{ height: "calc(25% - 8px)" }}>
+            {imageLayer}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col items-stretch gap-3 text-left">
+        {(strikes.length > 0 || showcase.note.trim()) && (
+          <div className="flex flex-wrap items-start justify-center md:justify-start gap-x-4 gap-y-2">
+            {strikes.length > 0 && (
+              <div className="flex flex-col gap-1.5 font-bold text-black text-xl md:text-2xl">
+                {strikes.map((price) => (
+                  <StrikePrice
+                    key={price.id}
+                    text={price.text}
+                    lineColor={showcase.strikeLineColor}
+                  />
+                ))}
+              </div>
+            )}
+            {showcase.note.trim() && (
+              <p className="text-lg md:text-xl leading-tight text-black self-center">
+                {renderRichText(showcase.note)}
+              </p>
+            )}
+          </div>
+        )}
+
+        {(hasPrice || hasBadge) && (
+          // Kiri kedua kotak rata; hanya bar merah yang menonjol sedikit ke kanan, dan
+          // menindih bayangan bawah kotak biru sehingga keduanya menyatu.
+          <div className="relative">
+            {hasPrice && (
+              <div
+                className={cn(
+                  "rounded-lg border-4 border-black px-4 py-2.5 text-center shadow-[8px_8px_0_0_#000]",
+                  hasBadge ? "w-[calc(100%_-_17px)]" : "w-full",
+                )}
+                style={{ backgroundColor: showcase.finalPriceBg }}
+              >
+                <p
+                  className="tracking-tight leading-none font-bold"
+                  style={{ color: showcase.finalPriceColor, fontSize: "clamp(28px, 4vw, 44px)" }}
+                >
+                  {showcase.finalPrice}
+                </p>
+              </div>
+            )}
+
+            {hasBadge && (
+              <div
+                className={cn(
+                  "relative z-10 w-full rounded-lg border-4 border-black px-4 py-1.5 shadow-[8px_8px_0_0_#000] flex items-center justify-center gap-3 text-base md:text-lg leading-none",
+                  hasPrice && "-mt-1",
+                )}
+                style={{
+                  backgroundColor: showcase.discountBadgeBg,
+                  color: showcase.discountBadgeColor,
+                }}
+              >
+                {showcase.discountBadge.trim() && (
+                  <span className="whitespace-nowrap font-bold">{showcase.discountBadge}</span>
+                )}
+                {showcase.discountBadge.trim() && showcase.countdownEnabled && (
+                  <span className="opacity-70" aria-hidden>
+                    |
+                  </span>
+                )}
+                {showcase.countdownEnabled && <HeroCountdown endsAt={showcase.countdownEndsAt} />}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -564,6 +749,17 @@ export function EvomiLanding() {
             >
               {renderRichText(hero.title)}
             </motion.h1>
+
+            {hero.showcase?.enabled && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.18 }}
+                className="w-full"
+              >
+                <HeroShowcaseBlock showcase={hero.showcase} />
+              </motion.div>
+            )}
 
             {(hero.subtitleLine1 || hero.subtitleLine2) && (
               <motion.div

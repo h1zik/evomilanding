@@ -1,4 +1,12 @@
-import type { CounterAvatar, CounterAvatarIconType, HeroDecoration, HeroHighlight, HeroMascot, LandingContent } from "./types";
+import type {
+  CounterAvatar,
+  CounterAvatarIconType,
+  HeroDecoration,
+  HeroHighlight,
+  HeroMascot,
+  HeroShowcase,
+  LandingContent,
+} from "./types";
 import { defaultContent } from "./defaultContent";
 
 function resolveHeroTitle(hero: LandingContent["hero"]): string {
@@ -50,6 +58,44 @@ function defaultHighlights(): HeroHighlight[] {
 
 function defaultDecorations(): HeroDecoration[] {
   return defaultContent.hero.decorations;
+}
+
+function num(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function normalizeShowcase(raw: Partial<HeroShowcase> | undefined): HeroShowcase {
+  const def = defaultContent.hero.showcase;
+  const showcase = { ...def, ...(raw ?? {}) };
+  const strikePrices = Array.isArray(showcase.strikePrices)
+    ? showcase.strikePrices
+        .filter((p) => p && typeof p.text === "string")
+        .map((p, i) => ({ id: p.id || `strike-${i + 1}`, text: p.text }))
+    : def.strikePrices;
+
+  return {
+    ...showcase,
+    enabled: showcase.enabled !== false,
+    imageUrl: showcase.imageUrl ?? "",
+    imageAlt: showcase.imageAlt ?? def.imageAlt,
+    imageOffsetX: num(showcase.imageOffsetX, def.imageOffsetX),
+    imageOffsetY: num(showcase.imageOffsetY, def.imageOffsetY),
+    imageScale: num(showcase.imageScale, def.imageScale),
+    imageFit: showcase.imageFit === "contain" ? "contain" : "cover",
+    frameColor: showcase.frameColor || def.frameColor,
+    frameRatio: num(showcase.frameRatio, def.frameRatio),
+    strikePrices,
+    strikeLineColor: showcase.strikeLineColor || def.strikeLineColor,
+    note: showcase.note ?? def.note,
+    finalPrice: showcase.finalPrice ?? def.finalPrice,
+    finalPriceBg: showcase.finalPriceBg || def.finalPriceBg,
+    finalPriceColor: showcase.finalPriceColor || def.finalPriceColor,
+    discountBadge: showcase.discountBadge ?? def.discountBadge,
+    discountBadgeBg: showcase.discountBadgeBg || def.discountBadgeBg,
+    discountBadgeColor: showcase.discountBadgeColor || def.discountBadgeColor,
+    countdownEnabled: showcase.countdownEnabled !== false,
+    countdownEndsAt: showcase.countdownEndsAt ?? "",
+  };
 }
 
 const COUNTER_AVATAR_ICONS = new Set<CounterAvatarIconType>([
@@ -210,6 +256,7 @@ function normalizeContent(content: LandingContent): LandingContent {
     hero: {
       ...hero,
       title: resolveHeroTitle(hero),
+      showcase: normalizeShowcase(hero.showcase),
       counterAvatars:
         hero.counterAvatars && hero.counterAvatars.length > 0
           ? hero.counterAvatars.map(normalizeCounterAvatar)

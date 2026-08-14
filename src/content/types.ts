@@ -97,6 +97,50 @@ export interface HeroDecoration {
   mobile?: HeroDecorationMobile;
 }
 
+/** Satu baris harga coret di panel promo hero */
+export interface HeroStrikePrice {
+  id: string;
+  text: string;
+}
+
+/** Blok gambar produk + panel harga di hero (di bawah judul utama) */
+export interface HeroShowcase {
+  /** Tampilkan blok ini di hero */
+  enabled: boolean;
+  imageUrl: string;
+  imageAlt: string;
+  /** Geser gambar kiri/kanan dalam persen lebar frame (− kiri, + kanan) */
+  imageOffsetX: number;
+  /** Geser gambar atas/bawah dalam persen tinggi frame (− atas, + bawah) */
+  imageOffsetY: number;
+  /** Zoom gambar dalam persen (100 = pas frame) */
+  imageScale: number;
+  /** cover = penuhi frame (bisa terpotong) · contain = gambar utuh */
+  imageFit: "cover" | "contain";
+  /** Warna latar frame gambar */
+  frameColor: string;
+  /** Rasio frame = lebar ÷ tinggi (mis. 2.9 untuk banner memanjang) */
+  frameRatio: number;
+  /** Baris harga coret, mis. Rp 250.000 */
+  strikePrices: HeroStrikePrice[];
+  /** Warna garis coret harga */
+  strikeLineColor: string;
+  /** Catatan di kanan harga coret — mendukung <br>, warna, **bold** */
+  note: string;
+  /** Harga akhir, mis. Rp 171.000 */
+  finalPrice: string;
+  finalPriceBg: string;
+  finalPriceColor: string;
+  /** Badge diskon, mis. 24% + 10% off */
+  discountBadge: string;
+  discountBadgeBg: string;
+  discountBadgeColor: string;
+  /** Tampilkan hitung mundur di samping badge diskon */
+  countdownEnabled: boolean;
+  /** Target hitung mundur (ISO lokal, mis. 2026-09-01T00:00). Kosong = 00:00:00:00 */
+  countdownEndsAt: string;
+}
+
 /** Strip gambar di bawah CTA hero (mis. recycle / kampanye) */
 export interface HeroHighlight {
   id: string;
@@ -145,6 +189,8 @@ export interface LandingContent {
     subtitleLine2?: string;
     description: string;
     ctaText: string;
+    /** Gambar produk + panel harga, tampil tepat di bawah judul */
+    showcase: HeroShowcase;
     mascots: HeroMascot[];
     decorations: HeroDecoration[];
     highlights: HeroHighlight[];
