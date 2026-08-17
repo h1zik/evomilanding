@@ -5,6 +5,7 @@ import type {
   HeroHighlight,
   HeroMascot,
   HeroShowcase,
+  HeroShowcaseMobile,
   LandingContent,
 } from "./types";
 import { defaultContent } from "./defaultContent";
@@ -64,6 +65,21 @@ function num(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
+function normalizeShowcaseMobile(
+  raw: Partial<HeroShowcaseMobile> | undefined,
+): HeroShowcaseMobile {
+  const def = defaultContent.hero.showcase.mobile;
+  const mobile = { ...def, ...(raw ?? {}) };
+  return {
+    enabled: mobile.enabled === true,
+    imageOffsetX: num(mobile.imageOffsetX, def.imageOffsetX),
+    imageOffsetY: num(mobile.imageOffsetY, def.imageOffsetY),
+    imageScale: num(mobile.imageScale, def.imageScale),
+    imageFit: mobile.imageFit === "contain" ? "contain" : "cover",
+    frameRatio: num(mobile.frameRatio, def.frameRatio),
+  };
+}
+
 function normalizeShowcase(raw: Partial<HeroShowcase> | undefined): HeroShowcase {
   const def = defaultContent.hero.showcase;
   const showcase = { ...def, ...(raw ?? {}) };
@@ -84,6 +100,7 @@ function normalizeShowcase(raw: Partial<HeroShowcase> | undefined): HeroShowcase
     imageFit: showcase.imageFit === "contain" ? "contain" : "cover",
     frameColor: showcase.frameColor || def.frameColor,
     frameRatio: num(showcase.frameRatio, def.frameRatio),
+    mobile: normalizeShowcaseMobile(showcase.mobile),
     strikePrices,
     strikeLineColor: showcase.strikeLineColor || def.strikeLineColor,
     note: showcase.note ?? def.note,

@@ -103,6 +103,18 @@ export interface HeroStrikePrice {
   text: string;
 }
 
+/** Override tampilan gambar showcase khusus layar HP (< md) */
+export interface HeroShowcaseMobile {
+  /** true = pakai nilai di bawah · false = ikut pengaturan desktop */
+  enabled: boolean;
+  imageOffsetX: number;
+  imageOffsetY: number;
+  imageScale: number;
+  imageFit: "cover" | "contain";
+  /** Rasio frame di mobile. 0 = otomatis (rasio desktop, maks. 1.7) */
+  frameRatio: number;
+}
+
 /** Blok gambar produk + panel harga di hero (di bawah judul utama) */
 export interface HeroShowcase {
   /** Tampilkan blok ini di hero */
@@ -121,6 +133,8 @@ export interface HeroShowcase {
   frameColor: string;
   /** Rasio frame = lebar ÷ tinggi (mis. 2.9 untuk banner memanjang) */
   frameRatio: number;
+  /** Override posisi/zoom/rasio gambar di layar HP */
+  mobile: HeroShowcaseMobile;
   /** Baris harga coret, mis. Rp 250.000 */
   strikePrices: HeroStrikePrice[];
   /** Warna garis coret harga */
