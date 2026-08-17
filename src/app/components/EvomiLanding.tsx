@@ -6,6 +6,7 @@ import confetti from "canvas-confetti";
 import { useContent } from "@/content/ContentContext";
 import { fillTemplate, renderInline, renderRichText, stripRichText } from "@/content/renderInline";
 import { addSubmission, fetchWaitlistCount } from "@/content/waitlistStorage";
+import { trackWaitlistSignup } from "@/content/analytics";
 import { BrandMark } from "./BrandMark";
 import type {
   CounterAvatar,
@@ -654,6 +655,8 @@ export function EvomiLanding() {
     const total = await fetchWaitlistCount();
     setCount(total);
     setSubmitted(true);
+    // Konversi utama — dikirim di titik yang sama dengan state sukses yang dilihat user.
+    trackWaitlistSignup(total);
     confetti({
       particleCount: 120,
       spread: 80,
