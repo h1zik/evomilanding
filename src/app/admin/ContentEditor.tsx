@@ -1,6 +1,8 @@
+import { useState } from "react";
 import type {
   CounterAvatarIconType,
   HeroShowcase,
+  HeroShowcaseMobile,
   LandingContent,
   ScentCard,
   StoryIcon,
@@ -12,7 +14,15 @@ import { defaultContent } from "@/content/defaultContent";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { Plus, Trash2 } from "lucide-react";
+import { Monitor, Plus, Smartphone, Trash2 } from "lucide-react";
+import {
+  autoMobileRatio,
+  getDesktopRatio,
+  resolveShowcaseMobileView,
+  showcaseMobileFromDesktop,
+  type ShowcaseImageView,
+} from "@/content/heroShowcaseLayout";
+import { cn } from "../components/ui/utils";
 import {
   CardShell,
   ColorField,
@@ -36,6 +46,7 @@ type EditorProps = {
 };
 
 function HeroShowcaseFields({ draft, patch, patchImage }: EditorProps) {
+  const [viewMode, setViewMode] = useState<"desktop" | "mobile">("desktop");
   const showcase = { ...defaultContent.hero.showcase, ...(draft.hero.showcase ?? {}) };
   const setShowcase = (partial: Partial<HeroShowcase>) =>
     patch((c) => ({
@@ -46,7 +57,31 @@ function HeroShowcaseFields({ draft, patch, patchImage }: EditorProps) {
       },
     }));
 
-  const mobileRatio = Math.min(showcase.frameRatio > 0 ? showcase.frameRatio : 2.9, 1.7);
+  const setShowcaseMobile = (partial: Partial<HeroShowcaseMobile>) =>
+    setShowcase({
+      mobile: {
+        ...defaultContent.hero.showcase.mobile,
+        ...(showcase.mobile ?? {}),
+        ...partial,
+      },
+    });
+
+  const mobileOn = showcase.mobile?.enabled === true;
+  const isMobileView = viewMode === "mobile";
+  // Nilai yang benar-benar tampil di viewport yang sedang dipilih.
+  const view = isMobileView
+    ? resolveShowcaseMobileView(showcase)
+    : {
+        imageOffsetX: showcase.imageOffsetX,
+        imageOffsetY: showcase.imageOffsetY,
+        imageScale: showcase.imageScale,
+        imageFit: showcase.imageFit,
+        frameRatio: getDesktopRatio(showcase),
+      };
+  // Slider di tab mobile dikunci selama override belum dinyalakan.
+  const locked = isMobileView && !mobileOn;
+  const setView = (partial: Partial<ShowcaseImageView>) =>
+    isMobileView ? setShowcaseMobile(partial) : setShowcase(partial);
 
   return (
     <FieldGroup title="Showcase produk & harga (di bawah judul)">
@@ -89,11 +124,64 @@ function HeroShowcaseFields({ draft, patch, patchImage }: EditorProps) {
           />
 
           <div className="space-y-3">
-            <p className="text-sm font-medium text-black/80">Posisi & ukuran gambar</p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm font-medium text-black/80">Posisi & ukuran gambar</p>
+              <div className="inline-flex rounded-lg border border-black/10 bg-white p-1 shadow-sm">
+                {(
+                  [
+                    { mode: "desktop", label: "Desktop", Icon: Monitor },
+                    { mode: "mobile", label: "Mobile", Icon: Smartphone },
+                  ] as const
+                ).map(({ mode, label, Icon }) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setViewMode(mode)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition",
+                      viewMode === mode
+                        ? "bg-[#1172ba] text-white"
+                        : "text-black/55 hover:text-black/80",
+                    )}
+                  >
+                    <Icon className="size-4" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {isMobileView && (
+              <div className="flex items-start justify-between gap-4 rounded-xl border border-black/10 bg-white p-4">
+                <div>
+                  <p className="text-sm font-medium text-black/80">Pengaturan khusus HP</p>
+                  <p className="text-xs text-black/50 mt-0.5">
+                    Mati = ikut pengaturan desktop, rasio frame otomatis dibatasi{" "}
+                    {autoMobileRatio(showcase).toFixed(1)} agar tidak terlalu pipih.
+                  </p>
+                </div>
+                <Switch
+                  checked={mobileOn}
+                  onCheckedChange={(v) => {
+                    // Sekali dinyalakan, nilai HP disalin dari desktop supaya tidak melompat.
+                    // Kalau sudah pernah diatur (rasio terisi), nilainya dipertahankan.
+                    if (v && (showcase.mobile?.frameRatio ?? 0) <= 0) {
+                      setShowcase({ mobile: showcaseMobileFromDesktop(showcase) });
+                    } else {
+                      setShowcaseMobile({ enabled: v });
+                    }
+                  }}
+                />
+              </div>
+            )}
+
             {/* Beri ruang di atas: gambar boleh menyembul melewati border atas */}
             <div
-              className="relative w-full mt-12 rounded-2xl border-4 border-black"
-              style={{ aspectRatio: showcase.frameRatio || 2.9, backgroundColor: showcase.frameColor }}
+              className={cn(
+                "relative w-full mt-12 rounded-2xl border-4 border-black",
+                isMobileView && "max-w-[280px] mx-auto",
+              )}
+              style={{ aspectRatio: view.frameRatio, backgroundColor: showcase.frameColor }}
             >
               {showcase.imageUrl ? (
                 <div
@@ -106,8 +194,8 @@ function HeroShowcaseFields({ draft, patch, patchImage }: EditorProps) {
                       alt={showcase.imageAlt}
                       className="w-full h-full"
                       style={{
-                        objectFit: showcase.imageFit,
-                        transform: `translate(${showcase.imageOffsetX}%, ${showcase.imageOffsetY}%) scale(${showcase.imageScale / 100})`,
+                        objectFit: view.imageFit,
+                        transform: `translate(${view.imageOffsetX}%, ${view.imageOffsetY}%) scale(${view.imageScale / 100})`,
                       }}
                     />
                   </div>
@@ -119,49 +207,58 @@ function HeroShowcaseFields({ draft, patch, patchImage }: EditorProps) {
               )}
             </div>
             <p className="text-xs text-black/45">
-              Pratinjau frame versi desktop. Bagian atas gambar sengaja menimpa border dan tidak
-              terpotong saat di-zoom — sisi kiri, kanan, dan bawah tetap rapi di dalam border. Di layar
-              HP rasio otomatis dibatasi jadi {mobileRatio.toFixed(1)} agar tidak terlalu pipih.
+              Pratinjau frame versi {isMobileView ? "HP" : "desktop"}. Bagian atas gambar sengaja
+              menimpa border dan tidak terpotong saat di-zoom — sisi kiri, kanan, dan bawah tetap rapi
+              di dalam border.
+              {locked && " Nyalakan pengaturan khusus HP di atas untuk mengubah nilainya."}
             </p>
 
             <SliderField
               label="Geser kiri / kanan"
-              value={showcase.imageOffsetX}
+              value={view.imageOffsetX}
               min={-100}
               max={100}
               suffix="%"
+              disabled={locked}
               hint="Negatif = geser ke kiri, positif = geser ke kanan."
-              onChange={(v) => setShowcase({ imageOffsetX: v })}
+              onChange={(v) => setView({ imageOffsetX: v })}
             />
             <SliderField
               label="Geser atas / bawah"
-              value={showcase.imageOffsetY}
+              value={view.imageOffsetY}
               min={-100}
               max={100}
               suffix="%"
+              disabled={locked}
               hint="Negatif = geser ke atas, positif = geser ke bawah."
-              onChange={(v) => setShowcase({ imageOffsetY: v })}
+              onChange={(v) => setView({ imageOffsetY: v })}
             />
             <SliderField
               label="Zoom gambar"
-              value={showcase.imageScale}
+              value={view.imageScale}
               min={50}
               max={250}
               suffix="%"
+              disabled={locked}
               hint="Perbesar dulu kalau mau menggeser gambar tanpa muncul celah di frame."
-              onChange={(v) => setShowcase({ imageScale: v })}
+              onChange={(v) => setView({ imageScale: v })}
             />
             <SliderField
               label="Rasio frame (lebar ÷ tinggi)"
-              value={showcase.frameRatio}
-              min={1}
+              value={view.frameRatio}
+              min={0.8}
               max={4}
               step={0.1}
-              hint="2.9 = banner memanjang seperti desain. Makin kecil, makin tinggi framenya."
-              onChange={(v) => setShowcase({ frameRatio: v })}
+              disabled={locked}
+              hint={
+                isMobileView
+                  ? "Di HP frame yang terlalu pipih bikin gambar kecil — coba 1.2–1.7."
+                  : "2.9 = banner memanjang seperti desain. Makin kecil, makin tinggi framenya."
+              }
+              onChange={(v) => setView({ frameRatio: v })}
             />
 
-            <div className="space-y-1.5">
+            <div className={cn("space-y-1.5", locked && "opacity-50")}>
               <Label className="text-sm font-medium text-black/80">Cara gambar mengisi frame</Label>
               <div className="flex gap-2">
                 {(["cover", "contain"] as const).map((fit) => (
@@ -169,8 +266,9 @@ function HeroShowcaseFields({ draft, patch, patchImage }: EditorProps) {
                     key={fit}
                     type="button"
                     size="sm"
-                    variant={showcase.imageFit === fit ? "default" : "outline"}
-                    onClick={() => setShowcase({ imageFit: fit })}
+                    disabled={locked}
+                    variant={view.imageFit === fit ? "default" : "outline"}
+                    onClick={() => setView({ imageFit: fit })}
                   >
                     {fit === "cover" ? "Penuhi frame" : "Tampil utuh"}
                   </Button>

@@ -26,6 +26,7 @@ import {
 } from "./ui/carousel";
 import { cn } from "./ui/utils";
 import { getDecorationLayout, type DecorationViewport } from "@/content/heroDecorationLayout";
+import { resolveShowcaseMobileView } from "@/content/heroShowcaseLayout";
 
 const STORY_ICONS = {
   heart: Heart,
@@ -254,23 +255,31 @@ function StrikePrice({ text, lineColor }: { text: string; lineColor: string }) {
 /** Gambar produk + panel harga di hero */
 function HeroShowcaseBlock({ showcase }: { showcase: HeroShowcase }) {
   const ratio = showcase.frameRatio > 0 ? showcase.frameRatio : 2.9;
-  // Frame terlalu pipih di layar kecil — batasi rasio di mobile.
-  const mobileRatio = Math.min(ratio, 1.7);
+  const view = resolveShowcaseMobileView(showcase);
+  const mobileRatio = view.frameRatio;
   const strikes = showcase.strikePrices.filter((p) => p.text.trim());
   const hasPrice = showcase.finalPrice.trim().length > 0;
   const hasBadge = showcase.discountBadge.trim().length > 0 || showcase.countdownEnabled;
 
   const imageLayer = showcase.imageUrl ? (
+    // Transform & object-fit dipilih lewat CSS var supaya bisa beda antara HP dan desktop
+    // tanpa menggandakan elemen gambar.
     <img
       src={showcase.imageUrl}
       alt={showcase.imageAlt}
-      className="w-full h-full select-none"
-      style={{
-        objectFit: showcase.imageFit,
-        transform: `translate(${showcase.imageOffsetX}%, ${showcase.imageOffsetY}%) scale(${
-          showcase.imageScale / 100
-        })`,
-      }}
+      className="w-full h-full select-none [object-fit:var(--sc-fit)] [transform:var(--sc-transform)] md:[object-fit:var(--sc-fit-md)] md:[transform:var(--sc-transform-md)]"
+      style={
+        {
+          "--sc-fit": view.imageFit,
+          "--sc-transform": `translate(${view.imageOffsetX}%, ${view.imageOffsetY}%) scale(${
+            view.imageScale / 100
+          })`,
+          "--sc-fit-md": showcase.imageFit,
+          "--sc-transform-md": `translate(${showcase.imageOffsetX}%, ${showcase.imageOffsetY}%) scale(${
+            showcase.imageScale / 100
+          })`,
+        } as React.CSSProperties
+      }
     />
   ) : (
     <div className="w-full h-full flex items-center justify-center text-center text-white/85 text-sm px-6">
@@ -734,7 +743,7 @@ export function EvomiLanding() {
               <div className="flex flex-col items-start text-left gap-1.5">
                 <LiveCounterBadge label={hero.counterLabel} />
                 <p
-                  className="text-sm md:text-base font-medium text-black leading-snug max-w-[9rem] md:max-w-[11rem]"
+                  className="text-xs md:text-base font-medium text-black leading-snug max-w-[8rem] md:max-w-[11rem]"
                 >
                   {hero.counterSuffix}
                 </p>
@@ -952,7 +961,7 @@ export function EvomiLanding() {
             <p className="mt-4 max-w-3xl text-black/70 text-lg leading-relaxed">{scents.description}</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {scents.cards.map((s, i) => (
               <motion.div
                 key={s.id}
@@ -961,7 +970,7 @@ export function EvomiLanding() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
                 whileHover={{ y: -8, rotate: i % 2 === 0 ? -2 : 2 }}
-                className="relative flex flex-col rounded-3xl border-4 border-black overflow-hidden bg-white shadow-[8px_8px_0_0_#000]"
+                className="relative flex flex-col rounded-2xl sm:rounded-3xl border-[3px] sm:border-4 border-black overflow-hidden bg-white shadow-[5px_5px_0_0_#000] sm:shadow-[8px_8px_0_0_#000]"
               >
                 <div
                   className="aspect-[3/4] relative shrink-0 overflow-hidden"
@@ -977,15 +986,15 @@ export function EvomiLanding() {
                       }}
                     />
                   ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-[140px] opacity-60">{s.emoji}</div>
+                    <div className="absolute inset-0 flex items-center justify-center text-[70px] sm:text-[140px] opacity-60">{s.emoji}</div>
                   )}
-                  <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-white border-2 border-black text-sm tracking-tight">
+                  <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 px-2 py-0.5 sm:px-3 sm:py-1 rounded-full bg-white border-2 border-black text-xs sm:text-sm tracking-tight">
                     No. 0{i + 1}
                   </div>
                   <motion.div
                     animate={{ rotate: [-12, 12, -12] }}
                     transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute bottom-4 right-4 w-16 h-16 origin-center"
+                    className="absolute bottom-2.5 right-2.5 sm:bottom-4 sm:right-4 w-10 h-10 sm:w-16 sm:h-16 origin-center"
                   >
                     {s.stickerImageUrl ? (
                       <img
@@ -999,10 +1008,10 @@ export function EvomiLanding() {
                     )}
                   </motion.div>
                 </div>
-                <div className="relative z-10 -mt-5 w-full flex-1 overflow-hidden rounded-t-3xl bg-white p-5 pt-6 flex flex-col gap-5">
+                <div className="relative z-10 -mt-4 sm:-mt-5 w-full flex-1 overflow-hidden rounded-t-2xl sm:rounded-t-3xl bg-white p-3.5 pt-5 sm:p-5 sm:pt-6 flex flex-col gap-3 sm:gap-5">
                   <h3
-                    style={{ fontSize: 28, fontWeight: 600 }}
-                    className="tracking-tight leading-none"
+                    style={{ fontWeight: 600 }}
+                    className="text-[20px] sm:text-[28px] tracking-tight leading-none"
                   >
                     <span style={{ color: s.nameColor }}>{s.name}</span>
                     <br />
@@ -1010,10 +1019,10 @@ export function EvomiLanding() {
                       {s.sub}
                     </span>
                   </h3>
-                  <p className="text-sm" style={{ color: s.vibeColor }}>
+                  <p className="text-xs sm:text-sm" style={{ color: s.vibeColor }}>
                     {s.vibe}
                   </p>
-                  <p className="text-sm leading-relaxed" style={{ color: s.descColor }}>
+                  <p className="text-xs sm:text-sm leading-relaxed" style={{ color: s.descColor }}>
                     {s.desc}
                   </p>
                 </div>

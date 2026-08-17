@@ -8,6 +8,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../../components/ui/collapsible";
+import { cn } from "../../components/ui/utils";
 
 export function SectionHeader({
   title,
@@ -145,6 +146,7 @@ export function SliderField({
   step = 1,
   suffix = "",
   hint,
+  disabled = false,
 }: {
   label: string;
   value: number;
@@ -154,9 +156,10 @@ export function SliderField({
   step?: number;
   suffix?: string;
   hint?: string;
+  disabled?: boolean;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className={cn("space-y-1.5", disabled && "opacity-50")}>
       <div className="flex items-center justify-between gap-2">
         <Label className="text-sm font-medium text-black/80">{label}</Label>
         <span className="text-xs tabular-nums text-black/50">
@@ -171,8 +174,9 @@ export function SliderField({
           max={max}
           step={step}
           value={value}
+          disabled={disabled}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full accent-[#1172ba]"
+          className="w-full accent-[#1172ba] disabled:cursor-not-allowed"
         />
         <Input
           type="number"
@@ -180,6 +184,7 @@ export function SliderField({
           max={max}
           step={step}
           value={value}
+          disabled={disabled}
           onChange={(e) => {
             const n = Number(e.target.value);
             if (!Number.isNaN(n)) onChange(Math.min(max, Math.max(min, n)));

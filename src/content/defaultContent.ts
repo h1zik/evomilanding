@@ -44,6 +44,14 @@ export const defaultContent: LandingContent = {
       imageFit: "cover",
       frameColor: "#4A72C4",
       frameRatio: 2.9,
+      mobile: {
+        enabled: false,
+        imageOffsetX: 0,
+        imageOffsetY: 0,
+        imageScale: 100,
+        imageFit: "cover",
+        frameRatio: 0,
+      },
       strikePrices: [
         { id: "strike-1", text: "Rp 250.000" },
         { id: "strike-2", text: "Rp 180.000" },
