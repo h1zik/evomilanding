@@ -53,6 +53,15 @@ export interface SeoRequestInfo {
   path: string;
 }
 
+/**
+ * Halaman admin (/admin, /admin/panel) ikut kena SPA fallback, jadi kalau tidak
+ * disaring script tracking ikut dimuat di sana dan sesi kerja tim sendiri
+ * terhitung sebagai traffic pengunjung di GA4.
+ */
+export function isAdminPath(path: string): boolean {
+  return /^\/admin(?:\/|$)/i.test(path || "");
+}
+
 /** Bangun tag <head> tambahan dari konten. */
 export function buildHeadTags(content: AnyContent, req: SeoRequestInfo): string {
   const site = content?.site ?? {};
@@ -165,8 +174,8 @@ fbq('init','${safeId}');fbq('track','PageView');
     }
   }
 
-  // Google Tag (Google Ads / GA4)
-  const gtagId = (site.googleTagId || "").trim();
+  // Google Tag (Google Ads / GA4) — tidak dimuat di halaman admin
+  const gtagId = isAdminPath(req.path) ? "" : (site.googleTagId || "").trim();
   if (gtagId && /^[A-Za-z0-9-]+$/.test(gtagId)) {
     tags.push(`<script async src="https://www.googletagmanager.com/gtag/js?id=${gtagId}"></script>
 <script>
