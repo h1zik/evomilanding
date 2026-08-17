@@ -19,6 +19,8 @@ export const defaultContent: LandingContent = {
   hero: {
     counterLabel: "LIVE",
     counterSuffix: "Orang sudah masuk waitlist",
+    counterSuffixSize: 16,
+    counterSuffixSizeMobile: 12,
     counterStart: 0,
     counterAvatars: [
       { id: "counter-1", icon: "star", bgColor: "#1172ba", iconColor: "#60BBFF", imageUrl: "" },

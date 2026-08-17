@@ -492,6 +492,26 @@ export function HeroSection({ draft, patch, patchImage }: EditorProps) {
             <Field label="Label badge" value={draft.hero.counterLabel} onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, counterLabel: v } }))} />
             <Field label="Teks di bawah angka" value={draft.hero.counterSuffix} onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, counterSuffix: v } }))} />
           </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <SliderField
+              label="Ukuran teks di HP"
+              value={draft.hero.counterSuffixSizeMobile ?? defaultContent.hero.counterSuffixSizeMobile}
+              min={9}
+              max={28}
+              suffix="px"
+              hint="Teks di bawah angka counter saat dibuka dari HP."
+              onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, counterSuffixSizeMobile: v } }))}
+            />
+            <SliderField
+              label="Ukuran teks di desktop"
+              value={draft.hero.counterSuffixSize ?? defaultContent.hero.counterSuffixSize}
+              min={9}
+              max={32}
+              suffix="px"
+              hint="Berlaku mulai layar lebar (md ke atas)."
+              onChange={(v) => patch((c) => ({ ...c, hero: { ...c.hero, counterSuffixSize: v } }))}
+            />
+          </div>
           <div className="pt-2 border-t border-black/8 space-y-4">
             <p className="text-sm text-black/55">
               Ikon overlap di kiri angka counter. Pilih preset atau upload gambar kustom per lingkaran.
