@@ -273,6 +273,11 @@ function normalizeContent(content: LandingContent): LandingContent {
     hero: {
       ...hero,
       title: resolveHeroTitle(hero),
+      counterSuffixSize: num(hero.counterSuffixSize, defaultContent.hero.counterSuffixSize),
+      counterSuffixSizeMobile: num(
+        hero.counterSuffixSizeMobile,
+        defaultContent.hero.counterSuffixSizeMobile,
+      ),
       showcase: normalizeShowcase(hero.showcase),
       counterAvatars:
         hero.counterAvatars && hero.counterAvatars.length > 0

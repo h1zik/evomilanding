@@ -743,7 +743,13 @@ export function EvomiLanding() {
               <div className="flex flex-col items-start text-left gap-1.5">
                 <LiveCounterBadge label={hero.counterLabel} />
                 <p
-                  className="text-xs md:text-base font-medium text-black leading-snug max-w-[8rem] md:max-w-[11rem]"
+                  className="font-medium text-black leading-snug max-w-[8rem] md:max-w-[11rem] [font-size:var(--counter-suffix-size)] md:[font-size:var(--counter-suffix-size-md)]"
+                  style={
+                    {
+                      "--counter-suffix-size": `${hero.counterSuffixSizeMobile ?? 12}px`,
+                      "--counter-suffix-size-md": `${hero.counterSuffixSize ?? 16}px`,
+                    } as React.CSSProperties
+                  }
                 >
                   {hero.counterSuffix}
                 </p>

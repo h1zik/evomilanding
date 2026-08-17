@@ -188,6 +188,10 @@ export interface LandingContent {
   hero: {
     counterLabel: string;
     counterSuffix: string;
+    /** Ukuran teks di bawah angka counter, dalam px (layar md ke atas) */
+    counterSuffixSize: number;
+    /** Ukuran teks di bawah angka counter di HP, dalam px */
+    counterSuffixSizeMobile: number;
     counterStart: number;
     /** Ikon overlap di kiri angka counter */
     counterAvatars: CounterAvatar[];
