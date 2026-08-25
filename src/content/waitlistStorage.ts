@@ -1,6 +1,7 @@
 import type { NewWaitlistSubmission, WaitlistSubmission } from "./waitlistTypes";
 
 const STORAGE_KEY = "evomi-waitlist-submissions";
+const NON_DIGIT = /\D/g;
 
 function createId() {
   return `wl-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -47,7 +48,7 @@ export async function addSubmission(data: NewWaitlistSubmission): Promise<Waitli
   const entry: WaitlistSubmission = {
     id: createId(),
     name: data.name.trim(),
-    whatsapp: data.whatsapp.replace(/\D/g, ""),
+    whatsapp: data.whatsapp.replace(NON_DIGIT, ""),
     scent: (data.scent ?? "").trim(),
     submittedAt: new Date().toISOString(),
   };
@@ -71,6 +72,45 @@ export async function addSubmission(data: NewWaitlistSubmission): Promise<Waitli
   const list = [entry, ...loadFromStorage()];
   saveToStorage(list);
   return entry;
+}
+
+export async function updateSubmission(
+  id: string,
+  data: Pick<WaitlistSubmission, "name" | "whatsapp" | "scent">,
+): Promise<WaitlistSubmission> {
+  const patch = {
+    name: data.name.trim(),
+    whatsapp: data.whatsapp.replace(NON_DIGIT, ""),
+    scent: (data.scent ?? "").trim(),
+  };
+
+  let res: Response | null = null;
+  try {
+    res = await fetch(`/api/waitlist/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    });
+  } catch {
+    res = null; // server tidak terjangkau — pakai localStorage
+  }
+
+  if (res) {
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(body?.error ?? "Gagal menyimpan perubahan");
+    }
+    const saved = (await res.json()) as WaitlistSubmission;
+    saveToStorage(loadFromStorage().map((s) => (s.id === id ? saved : s)));
+    return saved;
+  }
+
+  const list = loadFromStorage();
+  const current = list.find((s) => s.id === id);
+  if (!current) throw new Error("Pendaftar tidak ditemukan");
+  const updated: WaitlistSubmission = { ...current, ...patch };
+  saveToStorage(list.map((s) => (s.id === id ? updated : s)));
+  return updated;
 }
 
 export async function removeSubmission(id: string): Promise<WaitlistSubmission[]> {
