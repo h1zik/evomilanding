@@ -193,6 +193,45 @@ app.put("/api/waitlist", async (req, res) => {
   }
 });
 
+app.patch("/api/waitlist/:id", async (req, res) => {
+  try {
+    const { name, whatsapp, scent, submittedAt } = req.body ?? {};
+    const cleanName = typeof name === "string" ? name.trim() : "";
+    const cleanWhatsapp =
+      typeof whatsapp === "string" ? whatsapp.replace(/\D/g, "") : "";
+    if (!cleanName || !cleanWhatsapp) {
+      res.status(400).json({ error: "Nama dan WhatsApp wajib diisi" });
+      return;
+    }
+    const { rows } = await pool.query(
+      `UPDATE waitlist_submissions
+       SET name = $2,
+           whatsapp = $3,
+           scent = $4,
+           submitted_at = COALESCE($5::timestamptz, submitted_at)
+       WHERE id = $1
+       RETURNING id, name, whatsapp, scent,
+                 submitted_at AS "submittedAt"`,
+      [
+        req.params.id,
+        cleanName,
+        cleanWhatsapp,
+        typeof scent === "string" ? scent.trim() : "",
+        submittedAt ?? null,
+      ],
+    );
+    if (rows.length === 0) {
+      res.status(404).json({ error: "Pendaftar tidak ditemukan" });
+      return;
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({
+      error: err instanceof Error ? err.message : "Failed to update submission",
+    });
+  }
+});
+
 app.delete("/api/waitlist/:id", async (req, res) => {
   try {
     await pool.query(`DELETE FROM waitlist_submissions WHERE id = $1`, [
