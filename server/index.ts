@@ -10,6 +10,7 @@ import { attachOfficialRoute, SPA_FALLBACK_PATTERN } from "./officialRoute.js";
 import { attachBroadcastRoute } from "./broadcastRoute.js";
 import { attachVoucherRoute } from "./voucherRoute.js";
 import { injectSeo } from "./seoHead.js";
+import { isWaitlistClosed, waitlistClosedMessage } from "./waitlistWindow.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
@@ -137,6 +138,13 @@ app.get("/api/waitlist", async (_req, res) => {
 
 app.post("/api/waitlist", async (req, res) => {
   try {
+    // Sumber kebenaran penutupan — UI yang disembunyikan saja gampang dilewati.
+    const siteContent = await getSiteContent();
+    if (isWaitlistClosed(siteContent)) {
+      res.status(403).json({ error: waitlistClosedMessage(siteContent), closed: true });
+      return;
+    }
+
     const { id, name, whatsapp, scent, submittedAt } = req.body;
     const { rows } = await pool.query(
       `INSERT INTO waitlist_submissions (id, name, whatsapp, scent, submitted_at)

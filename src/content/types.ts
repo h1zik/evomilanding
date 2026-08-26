@@ -268,6 +268,17 @@ export interface LandingContent {
       name: string;
     };
     toastSuccess: string;
+    /** Penutupan pendaftaran otomatis saat batas waktu lewat */
+    close: {
+      /** Aktifkan penutupan otomatis */
+      enabled: boolean;
+      /** Batas waktu (ISO lokal WIB, mis. 2026-09-01T00:00). Kosong = ikut hitung mundur hero */
+      endsAt: string;
+      /** Judul yang menggantikan form saat sudah ditutup */
+      title: string;
+      /** Penjelasan di bawah judul — mendukung **bold** dan warna */
+      message: string;
+    };
   };
   testimonials: {
     titleBefore: string;

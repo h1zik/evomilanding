@@ -243,6 +243,13 @@ export const defaultContent: LandingContent = {
       name: "nama dulu dong, biar kita kenalan 💌",
     },
     toastSuccess: "kamu masuk waitlist! cek WA-mu ya ✨",
+    close: {
+      enabled: false,
+      endsAt: "",
+      title: "pendaftaran waitlist sudah ditutup 🥺",
+      message:
+        "makasih buat kamu yang udah gabung! pantau **Instagram EVOMI** ya, kita bakal buka batch berikutnya sebentar lagi 💌",
+    },
   },
   testimonials: {
     titleBefore: "kata ",

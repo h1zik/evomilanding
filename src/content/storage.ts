@@ -269,6 +269,11 @@ function normalizeContent(content: LandingContent): LandingContent {
         shareMessage:
           waitlist.form?.shareMessage ?? defaultContent.waitlist.form.shareMessage,
       },
+      close: {
+        ...defaultContent.waitlist.close,
+        ...(waitlist.close ?? {}),
+        enabled: waitlist.close?.enabled === true,
+      },
     },
     hero: {
       ...hero,
