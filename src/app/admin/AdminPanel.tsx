@@ -17,6 +17,7 @@ import {
   Send,
   Settings,
   Sparkles,
+  Ticket,
   Upload,
   Users,
   Wind,
@@ -32,6 +33,7 @@ import { isAdminAuthenticated, logoutAdmin } from "./AdminLogin";
 import { StatCard } from "./components/AdminFields";
 import { WaitlistLeads } from "./WaitlistLeads";
 import { BroadcastPanel } from "./BroadcastPanel";
+import { VoucherPanel } from "./VoucherPanel";
 import {
   FooterSection,
   HeroSection,
@@ -47,6 +49,7 @@ type AdminView =
   | "dashboard"
   | "leads"
   | "broadcast"
+  | "vouchers"
   | "hero"
   | "marquee"
   | "story"
@@ -185,6 +188,8 @@ export function AdminPanel() {
         return <WaitlistLeads />;
       case "broadcast":
         return <BroadcastPanel />;
+      case "vouchers":
+        return <VoucherPanel />;
       case "settings":
         return (
           <div className="space-y-6 max-w-xl">
@@ -261,7 +266,9 @@ export function AdminPanel() {
         ? "Pendaftar Waitlist"
         : view === "broadcast"
           ? "Broadcast WhatsApp"
-          : view === "settings"
+          : view === "vouchers"
+            ? "Kode Voucher"
+            : view === "settings"
             ? "Pengaturan"
             : CONTENT_NAV.find((n) => n.id === view)?.label ?? "Admin";
 
@@ -283,6 +290,7 @@ export function AdminPanel() {
           <NavBtn active={view === "dashboard"} onClick={() => setView("dashboard")} icon={LayoutDashboard} label="Ringkasan" />
           <NavBtn active={view === "leads"} onClick={() => setView("leads")} icon={Users} label="Pendaftar Waitlist" badge={leadCount > 0 ? String(leadCount) : undefined} />
           <NavBtn active={view === "broadcast"} onClick={() => setView("broadcast")} icon={Send} label="Broadcast WA" />
+          <NavBtn active={view === "vouchers"} onClick={() => setView("vouchers")} icon={Ticket} label="Kode Voucher" />
 
           <p className="text-[10px] uppercase tracking-widest text-white/40 px-3 pt-4 pb-2">Konten Landing</p>
           {CONTENT_NAV.map((item) => (
@@ -346,6 +354,7 @@ export function AdminPanel() {
             <MobileNavChip active={view === "dashboard"} onClick={() => setView("dashboard")} label="Ringkasan" />
             <MobileNavChip active={view === "leads"} onClick={() => setView("leads")} label={`Pendaftar${leadCount ? ` (${leadCount})` : ""}`} />
             <MobileNavChip active={view === "broadcast"} onClick={() => setView("broadcast")} label="Broadcast WA" />
+            <MobileNavChip active={view === "vouchers"} onClick={() => setView("vouchers")} label="Kode Voucher" />
             {CONTENT_NAV.map((item) => (
               <MobileNavChip key={item.id} active={view === item.id} onClick={() => setView(item.id)} label={item.label} />
             ))}

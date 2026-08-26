@@ -1,40 +1,23 @@
-import type { Express, NextFunction, Request, Response } from "express";
+import type { Express, Request } from "express";
 import { pool } from "./db.js";
+import { requireAdmin } from "./adminAuth.js";
 import {
   getDeviceInfo,
   getFonnteToken,
+  hasVoucherPlaceholder,
   normalizePhone,
   sendBroadcast,
   type BroadcastTarget,
 } from "./fonnte.js";
+import {
+  claimVoucherCodes,
+  markVoucherCodesSent,
+  releaseVoucherCodes,
+  type VoucherAssignment,
+} from "./voucherRoute.js";
 
-/** Password admin sisi server — fallback ke VITE_ADMIN_PASSWORD agar sama dengan login panel */
-function getAdminPassword(): string | null {
-  const pwd =
-    process.env.ADMIN_PASSWORD?.trim() || process.env.VITE_ADMIN_PASSWORD?.trim();
-  return pwd ? pwd : null;
-}
-
-/**
- * Endpoint broadcast bisa mengirim pesan ke semua pendaftar (dan menghabiskan kuota),
- * jadi wajib menyertakan password admin di header `x-admin-password`.
- */
-function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  const expected = getAdminPassword();
-  if (!expected) {
-    res.status(500).json({
-      error:
-        "ADMIN_PASSWORD belum di-set di server. Tambahkan ke .env / environment variable Railway.",
-    });
-    return;
-  }
-  const given = req.header("x-admin-password");
-  if (given !== expected) {
-    res.status(401).json({ error: "Password admin tidak valid" });
-    return;
-  }
-  next();
-}
+/** Kode contoh untuk mode tes — tidak mengambil stok voucher asli */
+const TEST_VOUCHER_CODE = "CONTOH-VOUCHER-123";
 
 function createId() {
   return `bc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -71,9 +54,14 @@ interface WaitlistRow {
   whatsapp: string;
 }
 
+/** Target Fonnte yang masih membawa id pendaftar — dibutuhkan saat menautkan voucher */
+interface ResolvedTarget extends BroadcastTarget {
+  leadId: string;
+}
+
 /** Ambil pendaftar → target Fonnte, buang nomor invalid & duplikat */
 function toTargets(rows: WaitlistRow[]) {
-  const targets: BroadcastTarget[] = [];
+  const targets: ResolvedTarget[] = [];
   const invalid: { id: string; name: string; whatsapp: string }[] = [];
   const seen = new Set<string>();
 
@@ -85,7 +73,7 @@ function toTargets(rows: WaitlistRow[]) {
     }
     if (seen.has(phone)) continue;
     seen.add(phone);
-    targets.push({ phone, name: row.name });
+    targets.push({ leadId: row.id, phone, name: row.name });
   }
 
   return { targets, invalid };
@@ -145,12 +133,21 @@ export function attachBroadcastRoute(app: Express) {
       delay,
       recipientIds,
       testNumber,
+      voucherBatchId,
+      allowPartialVoucher,
+      skipAlreadyAssigned,
     } = req.body as {
       message?: string;
       imageUrl?: string;
       delay?: string;
       recipientIds?: string[] | null;
       testNumber?: string;
+      /** Kalau diisi, tiap penerima dapat satu kode unik dari batch ini */
+      voucherBatchId?: string | null;
+      /** Stok kode kurang → tetap kirim ke sebagian penerima */
+      allowPartialVoucher?: boolean;
+      /** Lewati pendaftar yang sudah pernah dapat kode dari batch ini (default: ya) */
+      skipAlreadyAssigned?: boolean;
     };
 
     const text = (message ?? "").trim();
@@ -160,6 +157,15 @@ export function attachBroadcastRoute(app: Express) {
     }
     if (text.length > 4000) {
       res.status(400).json({ error: "Pesan terlalu panjang (maksimal 4000 karakter)" });
+      return;
+    }
+
+    const batchId = voucherBatchId?.trim() || null;
+    if (batchId && !hasVoucherPlaceholder(text)) {
+      res.status(400).json({
+        error:
+          "Pesan belum memuat placeholder {voucher} — tanpa itu kode tidak akan muncul di pesan penerima.",
+      });
       return;
     }
 
@@ -183,7 +189,7 @@ export function attachBroadcastRoute(app: Express) {
         }
         const summary = await sendBroadcast(
           token,
-          [{ phone, name: "Admin" }],
+          [{ phone, name: "Admin", vars: batchId ? [TEST_VOUCHER_CODE] : undefined }],
           text,
           { imageUrl: publicImageUrl, delay },
         );
@@ -222,10 +228,78 @@ export function attachBroadcastRoute(app: Express) {
         return;
       }
 
-      const summary = await sendBroadcast(token, targets, text, {
+      const id = createId();
+
+      /**
+       * Mode voucher: kunci satu kode unik per penerima sebelum mengirim.
+       * Kode yang pengirimannya gagal dikembalikan ke stok di bawah, jadi
+       * broadcast bisa diulang tanpa kode terbuang.
+       */
+      let sendTargets: BroadcastTarget[] = targets;
+      let assignments: VoucherAssignment[] = [];
+      let voucherReport: {
+        batchId: string;
+        assigned: number;
+        alreadyHave: number;
+        missing: number;
+        sent: number;
+        released: number;
+      } | null = null;
+
+      if (batchId) {
+        const claim = await claimVoucherCodes(batchId, targets, {
+          skipAlreadyAssigned: skipAlreadyAssigned !== false,
+          allowPartial: allowPartialVoucher === true,
+        });
+        assignments = claim.assignments;
+
+        if (assignments.length === 0) {
+          res.status(400).json({
+            error:
+              claim.alreadyHave.length > 0
+                ? "Semua penerima terpilih sudah pernah menerima kode dari batch ini."
+                : "Tidak ada kode voucher tersedia di batch ini.",
+            voucher: {
+              batchId,
+              assigned: 0,
+              alreadyHave: claim.alreadyHave.length,
+              missing: claim.missing.length,
+            },
+          });
+          return;
+        }
+
+        sendTargets = assignments.map((a) => ({
+          phone: a.phone,
+          name: a.name,
+          vars: [a.code],
+        }));
+        voucherReport = {
+          batchId,
+          assigned: assignments.length,
+          alreadyHave: claim.alreadyHave.length,
+          missing: claim.missing.length,
+          sent: 0,
+          released: 0,
+        };
+      }
+
+      const summary = await sendBroadcast(token, sendTargets, text, {
         imageUrl: publicImageUrl,
         delay,
       });
+
+      if (batchId && voucherReport) {
+        const delivered = new Set(summary.success);
+        const sentIds = assignments.filter((a) => delivered.has(a.phone)).map((a) => a.codeId);
+        const stuckIds = assignments
+          .filter((a) => !delivered.has(a.phone))
+          .map((a) => a.codeId);
+        await markVoucherCodesSent(sentIds, id);
+        await releaseVoucherCodes(stuckIds);
+        voucherReport.sent = sentIds.length;
+        voucherReport.released = stuckIds.length;
+      }
 
       const failures = [
         ...summary.failed,
@@ -241,28 +315,33 @@ export function attachBroadcastRoute(app: Express) {
             ? "partial"
             : "sent";
 
-      const id = createId();
       const { rows: saved } = await pool.query(
         `INSERT INTO broadcast_campaigns
-           (id, message, image_url, target_count, success_count, failed_count, status, detail, failures)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)
+           (id, message, image_url, target_count, success_count, failed_count, status, detail, failures, voucher_batch_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10)
          RETURNING id, message, image_url AS "imageUrl", target_count AS "targetCount",
                    success_count AS "successCount", failed_count AS "failedCount",
-                   status, detail, failures, created_at AS "createdAt"`,
+                   status, detail, failures, voucher_batch_id AS "voucherBatchId",
+                   created_at AS "createdAt"`,
         [
           id,
           text,
           publicImageUrl ?? null,
-          targets.length + invalid.length,
+          sendTargets.length + invalid.length,
           summary.success.length,
           failures.length,
           status,
           summary.details.join(" | ").slice(0, 1000),
           JSON.stringify(failures.slice(0, 200)),
+          batchId,
         ],
       );
 
-      res.json({ campaign: saved[0], invalidSkipped: invalid.length });
+      res.json({
+        campaign: saved[0],
+        invalidSkipped: invalid.length,
+        voucher: voucherReport,
+      });
     } catch (err) {
       console.error("[broadcast] error:", err);
       res.status(500).json({
@@ -278,7 +357,8 @@ export function attachBroadcastRoute(app: Express) {
       const { rows } = await pool.query(
         `SELECT id, message, image_url AS "imageUrl", target_count AS "targetCount",
                 success_count AS "successCount", failed_count AS "failedCount",
-                status, detail, failures, created_at AS "createdAt"
+                status, detail, failures, voucher_batch_id AS "voucherBatchId",
+                created_at AS "createdAt"
          FROM broadcast_campaigns
          ORDER BY created_at DESC
          LIMIT $1`,

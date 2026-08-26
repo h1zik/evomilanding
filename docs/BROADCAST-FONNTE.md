@@ -76,3 +76,10 @@ sukses, gagal, dan daftar nomor gagal). Tabel dibuat otomatis saat server start.
 - Broadcast memakai kuota Fonnte sebanyak jumlah penerima dan **tidak bisa
   dibatalkan** setelah dikirim.
 - Pesan dikirim per batch 50 nomor. Batch yang gagal tidak menghentikan sisanya.
+
+## Kode voucher
+
+Broadcast juga bisa membagikan satu kode voucher unik per penerima — lihat
+[VOUCHER-BROADCAST.md](./VOUCHER-BROADCAST.md). Field tambahan di body
+`POST /api/broadcast`: `voucherBatchId`, `allowPartialVoucher`,
+`skipAlreadyAssigned`.

@@ -10,6 +10,7 @@ import {
   Search,
   Send,
   Smartphone,
+  Ticket,
   Users,
   XCircle,
 } from "lucide-react";
@@ -19,12 +20,15 @@ import {
   fetchBroadcastHistory,
   fetchFonnteStatus,
   fetchRecipientSummary,
+  hasVoucherPlaceholder,
   renderPreview,
   sendBroadcast,
+  VOUCHER_TOKEN,
   type BroadcastCampaign,
   type FonnteStatus,
   type RecipientSummary,
 } from "@/content/broadcastApi";
+import { fetchVoucherBatches, type VoucherBatch } from "@/content/voucherApi";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
@@ -61,6 +65,7 @@ export function BroadcastPanel() {
   const [summary, setSummary] = useState<RecipientSummary | null>(null);
   const [leads, setLeads] = useState<WaitlistSubmission[]>([]);
   const [history, setHistory] = useState<BroadcastCampaign[]>([]);
+  const [batches, setBatches] = useState<VoucherBatch[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [message, setMessage] = useState("");
@@ -70,6 +75,9 @@ export function BroadcastPanel() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [query, setQuery] = useState("");
   const [testNumber, setTestNumber] = useState("");
+  const [voucherBatchId, setVoucherBatchId] = useState("");
+  const [allowPartialVoucher, setAllowPartialVoucher] = useState(false);
+  const [skipAlreadyAssigned, setSkipAlreadyAssigned] = useState(true);
 
   const [sending, setSending] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -78,12 +86,16 @@ export function BroadcastPanel() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [statusRes, summaryRes, historyRes, leadsRes] = await Promise.allSettled([
-      fetchFonnteStatus(),
-      fetchRecipientSummary(),
-      fetchBroadcastHistory(),
-      fetchSubmissions(),
-    ]);
+    const [statusRes, summaryRes, historyRes, leadsRes, batchesRes] =
+      await Promise.allSettled([
+        fetchFonnteStatus(),
+        fetchRecipientSummary(),
+        fetchBroadcastHistory(),
+        fetchSubmissions(),
+        fetchVoucherBatches(),
+      ]);
+
+    if (batchesRes.status === "fulfilled") setBatches(batchesRes.value);
 
     if (statusRes.status === "fulfilled") setStatus(statusRes.value);
     else setStatus({ configured: false, message: statusRes.reason?.message });
@@ -122,11 +134,25 @@ export function BroadcastPanel() {
 
   const recipientCount = sendToAll ? (summary?.valid ?? 0) : selectedIds.length;
   const previewName = leads[0]?.name ?? "Kak Budi";
+
+  const selectedBatch = batches.find((b) => b.id === voucherBatchId) ?? null;
+  /** Tanpa placeholder, kode tidak akan muncul di pesan — server juga menolaknya */
+  const voucherPlaceholderMissing = Boolean(selectedBatch) && !hasVoucherPlaceholder(message);
+  /**
+   * Perkiraan kekurangan kode. Bisa lebih besar dari kenyataan kalau sebagian
+   * penerima nanti dilewati karena sudah pernah dapat kode dari batch ini.
+   */
+  const voucherShortfall = selectedBatch
+    ? Math.max(0, recipientCount - selectedBatch.availableCount)
+    : 0;
+
   const canSend =
     message.trim().length > 0 &&
     recipientCount > 0 &&
     !sending &&
     !imageUploading &&
+    !voucherPlaceholderMissing &&
+    (voucherShortfall === 0 || allowPartialVoucher) &&
     status?.configured;
 
   function toggleLead(id: string) {
@@ -137,6 +163,10 @@ export function BroadcastPanel() {
 
   function insertPlaceholder() {
     setMessage((prev) => `${prev}{nama}`);
+  }
+
+  function insertVoucherPlaceholder() {
+    setMessage((prev) => `${prev}${VOUCHER_TOKEN}`);
   }
 
   async function handleTest() {
@@ -155,6 +185,8 @@ export function BroadcastPanel() {
         imageUrl: imageUrl.trim() || undefined,
         delay,
         testNumber: testNumber.trim(),
+        // Mode tes memakai kode contoh — stok voucher asli tidak berkurang
+        voucherBatchId: voucherBatchId || null,
       });
       if (res.success) {
         toast.success(`Pesan tes dikirim ke ${testNumber}`);
@@ -177,7 +209,21 @@ export function BroadcastPanel() {
         imageUrl: imageUrl.trim() || undefined,
         delay,
         recipientIds: sendToAll ? null : selectedIds,
+        voucherBatchId: voucherBatchId || null,
+        allowPartialVoucher,
+        skipAlreadyAssigned,
       });
+      const v = res.voucher;
+      if (v) {
+        const notes = [
+          v.alreadyHave > 0 ? `${v.alreadyHave} sudah pernah dapat kode` : "",
+          v.missing > 0 ? `${v.missing} tidak kebagian (stok habis)` : "",
+          v.released > 0 ? `${v.released} kode dikembalikan ke stok` : "",
+        ].filter(Boolean);
+        toast.info(
+          `${v.sent} kode voucher terbagikan${notes.length ? ` — ${notes.join(", ")}` : ""}`,
+        );
+      }
       const c = res.campaign;
       if (c) {
         if (c.status === "failed") {
@@ -268,9 +314,19 @@ export function BroadcastPanel() {
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2">
             <Label className="text-sm font-medium text-black/80">Isi pesan</Label>
-            <Button type="button" variant="ghost" size="sm" onClick={insertPlaceholder}>
-              + Sisipkan {"{nama}"}
-            </Button>
+            <div className="flex gap-1">
+              <Button type="button" variant="ghost" size="sm" onClick={insertPlaceholder}>
+                + {"{nama}"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={insertVoucherPlaceholder}
+              >
+                + {"{voucher}"}
+              </Button>
+            </div>
           </div>
           <Textarea
             value={message}
@@ -321,6 +377,107 @@ export function BroadcastPanel() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Voucher — tiap penerima dapat satu kode unik dari batch terpilih */}
+      <div className="rounded-2xl border border-black/8 bg-white p-5 space-y-4 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Ticket className="size-4 text-[#1172ba]" />
+          <p className="font-semibold text-sm text-black/75">Lampirkan kode voucher</p>
+        </div>
+
+        {batches.length === 0 ? (
+          <p className="text-sm text-black/50">
+            Belum ada batch voucher. Buat dulu di menu <strong>Kode Voucher</strong>, lalu
+            kembali ke sini untuk membagikannya.
+          </p>
+        ) : (
+          <>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium text-black/80">Batch voucher</Label>
+              <select
+                value={voucherBatchId}
+                onChange={(e) => setVoucherBatchId(e.target.value)}
+                className="w-full h-9 rounded-lg border border-black/15 bg-white px-3 text-sm"
+              >
+                <option value="">Tanpa voucher — kirim pesan biasa</option>
+                {batches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name} — {b.availableCount} kode tersedia
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-black/45">
+                Setiap penerima mendapat satu kode berbeda. Tulis{" "}
+                <code className="bg-black/5 px-1 rounded">{"{voucher}"}</code> di pesan untuk
+                menempatkan kodenya.
+              </p>
+            </div>
+
+            {selectedBatch && (
+              <>
+                <div className="grid sm:grid-cols-3 gap-3">
+                  <MiniStat label="Kode tersedia" value={selectedBatch.availableCount} />
+                  <MiniStat label="Penerima" value={recipientCount} />
+                  <MiniStat
+                    label="Kurang"
+                    value={voucherShortfall}
+                    tone={voucherShortfall > 0 ? "warn" : "ok"}
+                  />
+                </div>
+
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <Checkbox
+                    checked={skipAlreadyAssigned}
+                    onCheckedChange={(v) => setSkipAlreadyAssigned(v === true)}
+                    className="mt-0.5"
+                  />
+                  <span className="text-sm text-black/70">
+                    Lewati pendaftar yang sudah pernah dapat kode dari batch ini
+                    <span className="block text-xs text-black/45">
+                      Mencegah satu orang menerima dua kode kalau broadcast diulang.
+                    </span>
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <Checkbox
+                    checked={allowPartialVoucher}
+                    onCheckedChange={(v) => setAllowPartialVoucher(v === true)}
+                    className="mt-0.5"
+                  />
+                  <span className="text-sm text-black/70">
+                    Tetap kirim walau kode kurang
+                    <span className="block text-xs text-black/45">
+                      Kode dibagikan sesuai urutan pendaftar; sisanya tidak dikirimi pesan.
+                    </span>
+                  </span>
+                </label>
+
+                {voucherPlaceholderMissing && (
+                  <div className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-200 p-3">
+                    <AlertTriangle className="size-4 text-red-600 shrink-0 mt-0.5" />
+                    <p className="text-xs text-red-700">
+                      Pesan belum memuat <code>{"{voucher}"}</code> — kode tidak akan terlihat
+                      oleh penerima. Klik tombol <strong>+ {"{voucher}"}</strong> di atas.
+                    </p>
+                  </div>
+                )}
+
+                {voucherShortfall > 0 && !allowPartialVoucher && (
+                  <div className="flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 p-3">
+                    <AlertTriangle className="size-4 text-amber-600 shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-800">
+                      Kurang {voucherShortfall} kode untuk {recipientCount} penerima. Tambah
+                      kode di menu Kode Voucher, kurangi penerima, atau centang{" "}
+                      <strong>Tetap kirim walau kode kurang</strong>.
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        )}
       </div>
 
       {/* Penerima */}
@@ -479,6 +636,12 @@ export function BroadcastPanel() {
               <div key={c.id} className="p-4 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={c.status} />
+                  {c.voucherBatchId && (
+                    <Badge className="bg-[#DD74A5]/12 text-[#b0447c] border-[#DD74A5]/25 font-normal">
+                      <Ticket className="size-3" />
+                      {batches.find((b) => b.id === c.voucherBatchId)?.name ?? "Voucher"}
+                    </Badge>
+                  )}
                   <span className="text-xs text-black/45 flex items-center gap-1">
                     <Clock className="size-3" />
                     {formatDate(c.createdAt)}
@@ -518,6 +681,13 @@ export function BroadcastPanel() {
             <AlertDialogDescription>
               Pesan akan langsung masuk antrian Fonnte dan tidak bisa dibatalkan. Kuota Fonnte
               akan terpakai sebanyak jumlah penerima.
+              {selectedBatch && (
+                <span className="block mt-2">
+                  Tiap penerima mendapat satu kode unik dari batch{" "}
+                  <strong>{selectedBatch.name}</strong>. Kode yang terkirim langsung terkunci
+                  ke penerimanya dan tidak bisa dipakai orang lain.
+                </span>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="rounded-xl bg-black/[0.03] p-3 max-h-40 overflow-y-auto">
@@ -543,6 +713,30 @@ export function BroadcastPanel() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+function MiniStat({
+  label,
+  value,
+  tone = "neutral",
+}: {
+  label: string;
+  value: number;
+  tone?: "neutral" | "ok" | "warn";
+}) {
+  const toneClass =
+    tone === "warn"
+      ? "border-amber-300 bg-amber-50 text-amber-800"
+      : tone === "ok"
+        ? "border-[#5EA14A]/25 bg-[#5EA14A]/8 text-[#3f7133]"
+        : "border-black/10 bg-black/[0.02] text-black/70";
+
+  return (
+    <div className={`rounded-xl border px-3 py-2 ${toneClass}`}>
+      <p className="text-[11px] uppercase tracking-wider opacity-70">{label}</p>
+      <p className="text-lg font-semibold tabular-nums leading-tight">{value}</p>
     </div>
   );
 }
