@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { Sparkles, Heart, Flame, Leaf, Send, CheckCircle2, Star, Copy } from "lucide-react";
+import { Sparkles, Heart, Flame, Leaf, Send, CheckCircle2, Star, Copy, Clock } from "lucide-react";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { useContent } from "@/content/ContentContext";
 import { fillTemplate, renderInline, renderRichText, stripRichText } from "@/content/renderInline";
-import { addSubmission, fetchWaitlistCount } from "@/content/waitlistStorage";
+import { addSubmission, fetchWaitlistCount, WaitlistClosedError } from "@/content/waitlistStorage";
+import { parseCampaignDeadline, waitlistDeadline } from "@/content/waitlistWindow";
 import { trackWaitlistSignup } from "@/content/analytics";
 import { BrandMark } from "./BrandMark";
 import type {
@@ -14,6 +15,7 @@ import type {
   HeroDecoration,
   HeroMascot,
   HeroShowcase,
+  LandingContent,
   StoryIcon,
 } from "@/content/types";
 import {
@@ -208,10 +210,27 @@ function HeroDecorationLayer({
 
 /** Sisa waktu (ms) sampai `endsAt`. String kosong / tanggal invalid = 0. */
 function remainingMs(endsAt: string): number {
-  if (!endsAt) return 0;
-  const target = new Date(endsAt).getTime();
-  if (Number.isNaN(target)) return 0;
+  const target = parseCampaignDeadline(endsAt);
+  if (target === null) return 0;
   return Math.max(0, target - Date.now());
+}
+
+/** Pantau batas waktu pendaftaran secara live, tanpa perlu reload halaman. */
+function useDeadlinePassed(deadline: number | null): boolean {
+  const [passed, setPassed] = useState(() => deadline !== null && Date.now() >= deadline);
+
+  useEffect(() => {
+    if (deadline === null) {
+      setPassed(false);
+      return;
+    }
+    const tick = () => setPassed(Date.now() >= deadline);
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [deadline]);
+
+  return passed;
 }
 
 function formatCountdown(ms: number): string {
@@ -623,12 +642,31 @@ function WaitlistShareBar({ heading, message }: { heading: string; message: stri
   );
 }
 
+/** Menggantikan form saat pendaftaran waitlist sudah lewat batas waktu. */
+function WaitlistClosedPanel({ close }: { close: LandingContent["waitlist"]["close"] }) {
+  return (
+    <div className="text-center py-6">
+      <div className="w-20 h-20 rounded-full mx-auto flex items-center justify-center bg-[#FFD521] border-4 border-black">
+        <Clock className="w-10 h-10" />
+      </div>
+      <h3 className="mt-6 tracking-tight" style={{ fontSize: 30, fontWeight: 600 }}>
+        {close.title}
+      </h3>
+      <p className="mt-3 text-black/70">{renderInline(close.message)}</p>
+    </div>
+  );
+}
+
 export function EvomiLanding() {
   const { content, loading } = useContent();
   const [count, setCount] = useState(0);
   const [whatsapp, setWhatsapp] = useState("");
   const [name, setName] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  // Server bisa menolak walau jam di perangkat pengunjung masih meleset.
+  const [closedByServer, setClosedByServer] = useState(false);
+  const deadlinePassed = useDeadlinePassed(waitlistDeadline(content));
+  const waitlistClosed = deadlinePassed || closedByServer;
 
   useEffect(() => {
     let cancelled = false;
@@ -648,6 +686,7 @@ export function EvomiLanding() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (waitlistClosed) return;
     const digits = whatsapp.replace(/\D/g, "");
     if (digits.length < 9) {
       toast.error(content.waitlist.errors.whatsapp);
@@ -657,10 +696,19 @@ export function EvomiLanding() {
       toast.error(content.waitlist.errors.name);
       return;
     }
-    await addSubmission({
-      name: name.trim(),
-      whatsapp: digits,
-    });
+    try {
+      await addSubmission({
+        name: name.trim(),
+        whatsapp: digits,
+      });
+    } catch (err) {
+      if (err instanceof WaitlistClosedError) {
+        setClosedByServer(true);
+        toast.error(err.message);
+        return;
+      }
+      throw err;
+    }
     const total = await fetchWaitlistCount();
     setCount(total);
     setSubmitted(true);
@@ -1098,7 +1146,9 @@ export function EvomiLanding() {
             viewport={{ once: true }}
             className="w-full max-w-md mx-auto lg:max-w-none lg:mx-0 bg-white rounded-3xl border-4 border-black p-5 sm:p-8 shadow-[8px_8px_0_0_#000] lg:shadow-[12px_12px_0_0_#000]"
           >
-            {!submitted ? (
+            {!submitted && waitlistClosed ? (
+              <WaitlistClosedPanel close={waitlist.close} />
+            ) : !submitted ? (
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
                   <h3 className="tracking-tight" style={{ fontSize: 30, fontWeight: 600 }}>{waitlist.form.title}</h3>

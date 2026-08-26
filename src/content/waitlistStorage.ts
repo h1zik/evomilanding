@@ -44,6 +44,14 @@ export async function fetchWaitlistCount(): Promise<number> {
   return list.length;
 }
 
+/** Server menolak karena pendaftaran sudah ditutup (HTTP 403). */
+export class WaitlistClosedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "WaitlistClosedError";
+  }
+}
+
 export async function addSubmission(data: NewWaitlistSubmission): Promise<WaitlistSubmission> {
   const entry: WaitlistSubmission = {
     id: createId(),
@@ -53,20 +61,29 @@ export async function addSubmission(data: NewWaitlistSubmission): Promise<Waitli
     submittedAt: new Date().toISOString(),
   };
 
+  let res: Response | null = null;
   try {
-    const res = await fetch("/api/waitlist", {
+    res = await fetch("/api/waitlist", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(entry),
     });
-    if (res.ok) {
-      const saved = (await res.json()) as WaitlistSubmission;
-      const list = [saved, ...loadFromStorage().filter((s) => s.id !== saved.id)];
-      saveToStorage(list);
-      return saved;
-    }
   } catch {
-    /* fallback */
+    res = null; // server tidak terjangkau — pakai localStorage
+  }
+
+  if (res?.ok) {
+    const saved = (await res.json()) as WaitlistSubmission;
+    const list = [saved, ...loadFromStorage().filter((s) => s.id !== saved.id)];
+    saveToStorage(list);
+    return saved;
+  }
+
+  // Penolakan eksplisit tidak boleh diam-diam jatuh ke localStorage — pendaftar
+  // akan mengira dirinya terdaftar padahal tidak.
+  if (res?.status === 403) {
+    const body = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new WaitlistClosedError(body?.error ?? "Pendaftaran waitlist sudah ditutup");
   }
 
   const list = [entry, ...loadFromStorage()];

@@ -422,7 +422,8 @@ function HeroShowcaseFields({ draft, patch, patchImage }: EditorProps) {
                   className="bg-white"
                 />
                 <p className="text-xs text-black/45">
-                  Kosongkan untuk menampilkan 00:00:00:00. Waktu mengikuti zona waktu pengunjung.
+                  Kosongkan untuk menampilkan 00:00:00:00. Waktu dibaca sebagai WIB (UTC+7),
+                  sama untuk semua pengunjung.
                 </p>
               </div>
             )}
@@ -1156,7 +1157,61 @@ export function WaitlistFormSection({ draft, patch }: EditorProps) {
         <Field label="Error nama kosong" value={draft.waitlist.errors.name} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, errors: { ...c.waitlist.errors, name: v } } }))} />
         <Field label="Toast sukses" value={draft.waitlist.toastSuccess} onChange={(v) => patch((c) => ({ ...c, waitlist: { ...c.waitlist, toastSuccess: v } }))} />
       </FieldGroup>
+
+      <WaitlistCloseFields draft={draft} patch={patch} />
     </div>
+  );
+}
+
+/** Penutupan otomatis: form diganti pesan penutup, server pun menolak pendaftaran baru. */
+function WaitlistCloseFields({ draft, patch }: Pick<EditorProps, "draft" | "patch">) {
+  const close = { ...defaultContent.waitlist.close, ...(draft.waitlist.close ?? {}) };
+  const setClose = (partial: Partial<LandingContent["waitlist"]["close"]>) =>
+    patch((c) => ({
+      ...c,
+      waitlist: {
+        ...c.waitlist,
+        close: { ...defaultContent.waitlist.close, ...(c.waitlist.close ?? {}), ...partial },
+      },
+    }));
+
+  return (
+    <FieldGroup title="Tutup pendaftaran otomatis">
+      <div className="flex items-start justify-between gap-4 rounded-xl border border-black/10 bg-white p-4">
+        <div>
+          <p className="text-sm font-medium text-black/80">Tutup form saat waktu habis</p>
+          <p className="text-xs text-black/50 mt-0.5">
+            Form diganti pesan penutup dan server menolak pendaftaran baru.
+          </p>
+        </div>
+        <Switch checked={close.enabled} onCheckedChange={(v) => setClose({ enabled: v })} />
+      </div>
+
+      {close.enabled && (
+        <>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium text-black/80">Tutup pada</Label>
+            <Input
+              type="datetime-local"
+              value={close.endsAt}
+              onChange={(e) => setClose({ endsAt: e.target.value })}
+              className="bg-white"
+            />
+            <p className="text-xs text-black/45">
+              Kosongkan untuk mengikuti hitung mundur di hero. Waktu dibaca sebagai WIB (UTC+7).
+            </p>
+          </div>
+          <Field label="Judul penutup" value={close.title} onChange={(v) => setClose({ title: v })} />
+          <Field
+            label="Pesan penutup"
+            value={close.message}
+            onChange={(v) => setClose({ message: v })}
+            multiline
+            hint="**bold** didukung"
+          />
+        </>
+      )}
+    </FieldGroup>
   );
 }
 
