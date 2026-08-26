@@ -58,6 +58,39 @@ export async function initDatabase() {
 
       CREATE INDEX IF NOT EXISTS idx_broadcast_created_at
         ON broadcast_campaigns (created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS voucher_batches (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        note TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS voucher_codes (
+        id TEXT PRIMARY KEY,
+        batch_id TEXT NOT NULL REFERENCES voucher_batches (id) ON DELETE CASCADE,
+        code TEXT NOT NULL,
+        -- available = siap dibagikan, assigned = sudah dikunci untuk 1 orang,
+        -- sent = pesan berisi kode sudah masuk antrian Fonnte
+        status TEXT NOT NULL DEFAULT 'available',
+        lead_id TEXT,
+        lead_name TEXT,
+        lead_phone TEXT,
+        campaign_id TEXT,
+        assigned_at TIMESTAMPTZ,
+        sent_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (batch_id, code)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_voucher_codes_batch_status
+        ON voucher_codes (batch_id, status);
+
+      CREATE INDEX IF NOT EXISTS idx_voucher_codes_lead
+        ON voucher_codes (batch_id, lead_id);
+
+      ALTER TABLE broadcast_campaigns
+        ADD COLUMN IF NOT EXISTS voucher_batch_id TEXT;
     `);
 
     const existing = await client.query(

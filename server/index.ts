@@ -8,6 +8,7 @@ import { getDatabaseHost, initDatabase, pool } from "./db.js";
 import { ensureUploadsDir, resolveUploadsDir } from "./uploadPaths.js";
 import { attachOfficialRoute, SPA_FALLBACK_PATTERN } from "./officialRoute.js";
 import { attachBroadcastRoute } from "./broadcastRoute.js";
+import { attachVoucherRoute } from "./voucherRoute.js";
 import { injectSeo } from "./seoHead.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -350,6 +351,7 @@ async function start() {
   }
   await initDatabase();
   attachBroadcastRoute(app);
+  attachVoucherRoute(app);
   attachOfficialRoute(app);
   attachFrontend();
   app.listen(port, "0.0.0.0", () => {

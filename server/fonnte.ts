@@ -42,9 +42,28 @@ function sanitizeName(name: string): string {
   return clean || "Kak";
 }
 
+/** Isi variabel tidak boleh memakai delimiter target Fonnte ("|" & ",") */
+function sanitizeVar(value: string): string {
+  return (value ?? "").replace(/[|,\r\n]/g, " ").trim();
+}
+
+/**
+ * Alias yang ramah admin untuk {var1}. Fonnte sendiri hanya mengenal
+ * {name} dan {var1}..{varN}, jadi alias diterjemahkan sebelum request dikirim.
+ */
+export const VOUCHER_PLACEHOLDER = /\{\s*(voucher|kode|kupon)\s*\}/gi;
+
+/** Regex di atas global — pakai helper ini supaya `lastIndex` tidak bocor antar pemanggilan */
+export function hasVoucherPlaceholder(message: string): boolean {
+  VOUCHER_PLACEHOLDER.lastIndex = 0;
+  return VOUCHER_PLACEHOLDER.test(message);
+}
+
 export interface BroadcastTarget {
   phone: string;
   name: string;
+  /** Nilai per-penerima untuk {var1}, {var2}, ... — dipakai untuk kode voucher */
+  vars?: string[];
 }
 
 export interface FonnteSendResult {
@@ -77,14 +96,19 @@ async function sendBatch(
   message: string,
   options: { imageUrl?: string; delay?: string },
 ): Promise<FonnteSendResult> {
+  // Format target Fonnte: nomor|nama|var1|var2 — antar penerima dipisah koma
   const targetParam = targets
-    .map((t) => `${t.phone}|${sanitizeName(t.name)}`)
+    .map((t) =>
+      [t.phone, sanitizeName(t.name), ...(t.vars ?? []).map(sanitizeVar)].join("|"),
+    )
     .join(",");
 
   const body: Record<string, string> = {
     target: targetParam,
-    // Fonnte hanya mengenal {name} — {nama} disamakan agar admin bisa pakai keduanya
-    message: message.replace(/\{nama\}/gi, "{name}"),
+    // Fonnte hanya mengenal {name} & {varN} — alias admin disamakan di sini
+    message: message
+      .replace(/\{nama\}/gi, "{name}")
+      .replace(VOUCHER_PLACEHOLDER, "{var1}"),
     countryCode: "62",
     delay: options.delay?.trim() || "2-10",
   };
